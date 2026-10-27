@@ -8,6 +8,7 @@ Les créatures gagnent de l'expérience et **évoluent selon l'élément de la c
 - **En ligne** : une fois GitHub Pages activé (voir `GUIDE-GITHUB.md`), le jeu est à l'adresse
   `https://<ton-pseudo>.github.io/elementaires/`
 - **Sur ton ordinateur** : ouvre `index.html` dans un navigateur.
+- **Comme une application** : sur la version en ligne, utilise le menu du navigateur → « Installer l'application » (Android, ordinateur) ou Partager → « Sur l'écran d'accueil » (iPhone). Le jeu fonctionne ensuite hors connexion.
 
 ## Contenu du jeu
 
@@ -37,6 +38,9 @@ src/
   tuto.js               tutoriel et niveaux de difficulté
   boot.js               démarrage
 build.py                assemble src/ en index.html
+manifest.webmanifest    description de l'application installable
+sw.js                   service worker (installation, jeu hors connexion)
+icons/                  icônes de l'application
 impression/             kit d'impression PDF (cartes, plateau, règles)
 ```
 
