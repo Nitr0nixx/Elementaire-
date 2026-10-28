@@ -41,6 +41,7 @@ build.py                assemble src/ en index.html
 manifest.webmanifest    description de l'application installable
 sw.js                   service worker (installation, jeu hors connexion)
 icons/                  icônes de l'application
+music/                  musiques : menu et un thème par famille
 impression/             kit d'impression PDF (cartes, plateau, règles)
 ```
 
