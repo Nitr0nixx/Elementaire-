@@ -720,9 +720,9 @@ body.on-menu::before{content:""; position:fixed; inset:0; z-index:-1; pointer-ev
   <div class="showcase" id="showcase" aria-hidden="true"></div>
   <div class="menu-btns" id="mainPanel">
     <button class="btn-end m-gold" id="mContinue" type="button" hidden><span>Continuer la partie<small id="mContinueSub">Tour 3</small></span></button>
-    <button class="btn-end m-gold" id="mAI" type="button"><span>Partie contre l'IA<small>Choisis ton deck, l'IA tire le sien au sort</small></span></button>
-    <button class="btn-end m-gold duo-btn" id="mDuo" type="button"><span>Duo des Éléments<small class="pad">2 contre 2 : toi et une IA alliée contre deux IA</small><em class="chip new">Nouveau</em></span></button>
-    <button class="btn-end m-gold ffa-btn" id="mFfa" type="button"><span>Mêlée<small class="pad">Chacun pour soi, à 3 ou 4 joueurs contre l'IA</small><em class="chip new">Nouveau</em></span></button>
+    <button class="btn-end m-gold" id="mAI" type="button"><span>Partie contre l'IA<small>Duel à 30 PV, ton deck contre un deck tiré au sort</small></span></button>
+    <button class="btn-end m-gold duo-btn" id="mDuo" type="button"><span>Duo des Éléments<small>2 contre 2 : toi et une IA alliée contre deux IA</small></span></button>
+    <button class="btn-end m-gold ffa-btn" id="mFfa" type="button"><span>Mêlée<small>Chacun pour soi, à 3 ou 4 joueurs contre des IA</small></span></button>
     <button class="btn-end m-gold alt" id="mMulti" type="button"><span>En ligne<small class="pad">Duel, Duo ou Mêlée entre amis, avec un code</small><em class="chip new">Nouveau</em></span></button>
     <p class="soon-note" id="mMultiNote" hidden>Le mode multijoueur arrive dans une prochaine version. En attendant, entraîne-toi contre l'IA.</p>
     <div class="menu-row">
@@ -801,20 +801,30 @@ body.on-menu::before{content:""; position:fixed; inset:0; z-index:-1; pointer-ev
 <div class="modal" id="rules" hidden>
   <div class="sheet orn spikes m-gold"><div class="sheet-in">
     <h2>Règles d'Élémentaires</h2>
-    <p>Réduis les 30 PV du héros adverse à zéro. Choisis ton deck parmi quatre : les <b>Enfants de l'Orage</b> (Feu et Air), les <b>Gardiens des Profondeurs</b> (Eau et Terre), les <b>Veilleurs des Cimes</b> (Air et Terre) ou les <b>Fils de la Vapeur</b> (Eau et Feu). L'IA tire le sien au sort.</p>
+    <p>Réduis les PV du héros adverse à zéro. Tu joues un deck de 20 cartes de ta collection. Les quatre familles : les <b>Enfants de l'Orage</b> (Feu et Air), les <b>Gardiens des Profondeurs</b> (Eau et Terre), les <b>Veilleurs des Cimes</b> (Air et Terre) et les <b>Fils de la Vapeur</b> (Eau et Feu).</p>
+    <h4>Les modes</h4>
+    <ul>
+      <li><b>Partie contre l'IA</b> : un duel à <b>30 PV</b> chacun. L'IA tire son deck au sort ; choisis sa difficulté (Facile, Normal, Difficile).</li>
+      <li><b>Duo des Éléments</b> : 2 contre 2, toi et une IA alliée contre deux IA.</li>
+      <li><b>Mêlée</b> : chacun pour soi, à 3 ou 4 joueurs, contre des IA.</li>
+      <li><b>En ligne</b> : Duel, Duo ou Mêlée entre amis avec un code de salon. Les places libres sont tenues par des IA.</li>
+      <li><b>Tutoriel</b> : une première partie guidée, à 20 PV.</li>
+    </ul>
     <p>Le joueur qui commence est tiré au sort. L'autre reçoit une carte de plus et un <b>Éclat de mana</b> (0 mana : +1 mana pour ce tour).</p>
     <h4>Ton tour</h4>
     <ul>
       <li>Tu gagnes 1 cristal de mana de plus chaque tour (10 au maximum) et tu pioches une carte.</li>
-      <li>Touche une carte puis une case pour la jouer. Touche une créature pour voir ses détails.</li>
-      <li>À la fin du tour, chacune de tes créatures attaque celle d'en face dans son couloir. Si le couloir adverse est vide, elle frappe le héros. Une créature qui vient d'arriver attend le tour suivant.</li>
+      <li>Touche une carte puis une case pour la jouer. Touche une créature pour voir ses détails ; reste appuyé dessus pour voir ses PV actuels et maximum.</li>
+      <li>À la fin du tour, chacune de tes créatures attaque celle d'en face dans son couloir. Si le couloir adverse est vide, elle frappe le héros.</li>
+      <li>Une créature qui vient d'arriver est <b>au repos</b> (sablier, grisée) : elle attend le tour suivant. Une créature <b>prête</b> porte une épée dorée, qui brille quand elle va attaquer à la fin du tour.</li>
+      <li>Au centre du plateau : à gauche, les dernières cartes jouées ; à droite, les derniers échanges de combat. Touche-les pour le détail.</li>
     </ul>
     <h4>Le terrain</h4>
     <p>Chaque case a un élément. Une créature posée sur son élément gagne +1/+1. Les sorts de terrain changent l'élément d'une case, des deux côtés du plateau.</p>
     <div class="cycle"><span class="el-F">Feu</span>›<span class="el-A">Air</span>›<span class="el-T">Terre</span>›<span class="el-E">Eau</span>›<span class="el-F">Feu</span></div>
     <p>Une créature inflige des dégâts doublés à l'élément qu'elle domine.</p>
     <h4>L'évolution</h4>
-    <p>XP : +1 par tour survécu, +1 de plus sur son élément, +2 par créature tuée. Barre pleine, la créature évolue <b>selon l'élément de sa case</b> et récupère tous ses PV. Le Jeune dragon et la Tortue ancestrale peuvent ensuite devenir Légende.</p>
+    <p>XP : +1 par tour survécu, +1 de plus sur son élément, +2 par créature tuée. Barre pleine, la créature évolue <b>selon l'élément de sa case</b> et récupère tous ses PV. Le Jeune dragon, la Tortue ancestrale, l'Oiseau-roc et le Serpent de mer peuvent ensuite devenir Légende.</p>
     <h4>Duo des Éléments (2 contre 2)</h4>
     <ul>
       <li>Deux équipes de deux joueurs. Chacun a son deck, sa main et son mana. Les quatre decks sont tous en jeu.</li>
@@ -822,13 +832,22 @@ body.on-menu::before{content:""; position:fixed; inset:0; z-index:-1; pointer-ev
       <li>Les tours alternent entre les équipes : toi, adversaire 1, ton allié, adversaire 2. Tes créatures attaquent à la fin de ton tour.</li>
       <li>Tes sorts peuvent aider les créatures de ton allié. Prépare le terrain où elles évolueront !</li>
       <li><b>Harmonie</b> : une créature voisine d'une créature de ton allié d'un autre élément gagne +1 XP par tour.</li>
+      <li>En ligne à deux joueurs, l'hôte choisit : <b>alliés</b> contre deux IA, ou <b>adversaires</b>, chacun avec une IA alliée.</li>
     </ul>
     <h4>Mêlée (3 ou 4 joueurs, chacun pour soi)</h4>
     <ul>
       <li>Chaque joueur a 4 cases en deux fronts : 2 face à son voisin de gauche, 2 face à son voisin de droite. Tes créatures attaquent tout droit ; un couloir vide frappe le voisin de ce côté.</li>
       <li>Tes sorts peuvent viser n'importe quel joueur. Les places sont compensées en PV : 20, 21, 22 et 25 à 4 joueurs (20, 21 et 24 à 3).</li>
       <li>À 0 PV, un joueur est éliminé et ses voisins se retrouvent face à face. Éliminer un joueur fait piocher 2 cartes. Le dernier debout gagne.</li>
+      <li>En ligne, les places autour de la table sont tirées au sort. Un joueur éliminé peut quitter : la partie continue pour les autres.</li>
       <li><b>Talents</b> : Orage, <i>Élan</i> (+1 dégât à ta première attaque qui touche un héros, chaque tour). Profondeurs, <i>Reflux</i> (+1 PV quand une de tes créatures évoluées meurt). Cimes, <i>Vigie</i> (échange deux de tes terrains, une fois par tour). Vapeur, <i>Brume épaisse</i> (jamais de dégâts doublés contre tes créatures).</li>
+    </ul>
+    <h4>En ligne</h4>
+    <ul>
+      <li>Un joueur <b>crée un salon</b> et donne son code de 5 caractères ; les autres le <b>rejoignent</b> avec ce code. Chacun choisit son deck.</li>
+      <li>L'hôte choisit le mode (Duel, Duo, Mêlée à 3 ou à 4) et lance la partie. Les places libres sont jouées par des IA.</li>
+      <li>Si un joueur quitte ou perd la connexion, une IA prend sa place. À la fin, l'hôte peut relancer avec le même salon.</li>
+      <li>Tous les joueurs doivent utiliser la même version du jeu : le site GitHub, ou cette page dans Claude.</li>
     </ul>
     <div style="margin-top:16px"><button class="btn-end m-gold" type="button" data-close><span>Compris</span></button></div>
   </div></div>
