@@ -12,7 +12,7 @@ Les créatures gagnent de l'expérience et **évoluent selon l'élément de la c
 
 ## Contenu du jeu
 
-- **Modes** : Duel contre l'IA, Duel en ligne avec un code de partie, Duo (2 contre 2) et Mêlée (chacun pour soi à 3 ou 4 joueurs).
+- **Modes** : Duel contre l'IA, parties en ligne avec un code (Duel, Duo, Mêlée ; places libres tenues par des IA), Duo (2 contre 2) et Mêlée (chacun pour soi à 3 ou 4 joueurs).
 - **IA** : 3 niveaux de difficulté (Facile, Normal, Difficile).
 - **Decks** : 4 familles (Orage, Profondeurs, Cimes, Vapeur), avec un talent propre à chacune en Mêlée.
 - **Collection** : boosters, fabrication de cartes, construction de decks et progression par niveaux.
