@@ -161,8 +161,10 @@ function renderProfile(){
     <div class="pf-mid"><div class="xpbar"><i style="width:${SAVE.xp / xpNeed(SAVE.level) * 100}%"></i><span>${SAVE.xp}/${xpNeed(SAVE.level)} XP</span></div>
     <div class="pf-row"><span class="coin">${SAVE.coins}</span><span class="pk">${SAVE.packs} booster${SAVE.packs > 1 ? 's' : ''}</span><span>${ownedTotal()}/80 cartes</span></div>
     ${store !== 'db' ? `<small class="pf-warn">${store === 'local' ? 'Progression enregistrée dans ce navigateur seulement.' : 'Progression non enregistrée sur cet appareil.'}</small>` : ''}</div>
-    <button class="ghost banner" type="button" id="mColl"><span>Collection</span></button>`;
+    <div class="pf-btns"><button class="ghost banner" type="button" id="mColl"><span>Collection</span></button>
+    <button class="ghost banner sm" type="button" id="mSave"><span>Sauvegarde</span></button></div>`;
   $('#mColl').onclick = () => openColl('decks');
+  $('#mSave').onclick = openSaveModal;
 }
 function renderStarter(){
   $('#starterList').innerHTML = DECKS.slice(0, 4).map((D, k) => `

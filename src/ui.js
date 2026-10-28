@@ -299,6 +299,7 @@ function render(){
   $('#btnEnd').classList.remove('tuto-hl');
   tutoAfterRender();
   if (over() && !busy) showResult();
+  else saveGameSoon();
 }
 const over = () => S.winner !== null || (S.ffa && S.players[0].out);
 let vigie = null, inspectP = null;
@@ -475,6 +476,7 @@ async function aiTurn(p){
 }
 
 function showResult(){
+  clearGame();
   if (S.ffa) return showResultFFA();
   const w = S.winner;
   const title = w === 0 ? 'Victoire' : w === 1 ? 'Défaite' : 'Égalité';
@@ -691,7 +693,7 @@ function showMenu(){
   $('#game').hidden = true; $('#coll').hidden = true; $('#menu').hidden = false; $('#mMultiNote').hidden = true; showPanel(SAVE ? '#mainPanel' : '#starterPanel');
   renderProfile();
   document.body.classList.add('on-menu');
-  const live = S && !over() && !S.done && S.turn > 1 && !S.tuto;
+  const live = S && !over() && !S.done && (S.turn > 1 || S.restored) && !S.tuto && !(S.net && !NET.live);
   const reco = !!(SAVE && !SAVE.tutoDone);
   $('#mTuto').classList.toggle('reco', reco);
   $('#mTuto span').textContent = reco ? 'Tutoriel (recommandé)' : 'Tutoriel';
@@ -734,5 +736,5 @@ async function start(data){
   if (data && data.S && data.S.custom) DECKS[4] = data.S.custom;
   await bootMeta();
   if (data && data.S && data.S.teams && data.S.board.length){ S = data.S; S.fx = []; mode = S.mode || 'ai'; if (data.screen === 'game'){ showGame(); if (S.active !== 0 && S.winner === null) advance(); } else showMenu(); }
-  else showMenu();
+  else { if (SAVE) restoreGame(); showMenu(); }
 }

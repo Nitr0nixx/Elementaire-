@@ -59,6 +59,7 @@ $('#coach').addEventListener('click', e => {
   if (e.target.closest('#coSkip')){ TUTO.free = true; render(); }
 });
 function startTutorial(){
+  clearGame();
   sel = null; inspect = null; inspectP = null; vigie = null; busy = false; running = false;
   mode = 'ai'; pick = 0;
   S = newGame(20261027, [0, 1], 0);
