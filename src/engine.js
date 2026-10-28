@@ -353,7 +353,7 @@ function attackAt(S, p, side, i){
       const d = dc.u;
       if (d.ab.includes('dodge') && !d.dodged){ d.dodged = true; ev(S, {k:'dodge', side:os, i:j}); continue; }
       const mult = BEATS[u.el] === d.el && !hasTalent(S, d.owner, 'brume') ? 2 : 1;
-      if (mult === 2) ev(S, {k:'super', side:os, i:j});
+      if (mult === 2) ev(S, {k:'super', side:os, i:j, a:u.el, d:d.el});
       const uid = d.uid;
       damage(S, os, j, atk * mult);
       if (d.ab.includes('riposte')){ damage(S, side, i, 1); ev(S, {k:'riposte', side, i}); }

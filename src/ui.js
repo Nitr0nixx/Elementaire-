@@ -170,7 +170,13 @@ function heroHTML(t){
       </div>`; }).join('')}</div>
     <div class="h-row">${hpHTML(t)}</div>${t === 0 ? `<div class="h-row">${gemsHTML(me)}</div>` : ''}</div>`;
 }
-function unitHTML(u, c){
+// Avantage élémentaire face à la créature d'en face : 'adv' (inflige ×2), 'weak' (subit ×2)
+function facing(side, i){ if (side === undefined) return null; const os = oppSide(S, side); if (os < 0 || !S.board[os] || !S.board[os][i]) return null; return S.board[os][i].u; }
+function advOf(u, side, i){
+  const d = facing(side, i); if (!d) return {};
+  return {adv: BEATS[u.el] === d.el && !hasTalent(S, d.owner, 'brume'), weak: BEATS[d.el] === u.el && !hasTalent(S, u.owner, 'brume'), d};
+}
+function unitHTML(u, c, side, i){
   const a = effAtk(u, c), h = effHp(u, c), bon = bonus(u, c) === 1;
   const fl = u.owner === 0 && !u.stage && isFull(u.card), pz = !fl && u.owner === 0 && isPrism(u.card);
   const go = !u.sick && u.owner === S.active && !over();
@@ -180,10 +186,18 @@ function unitHTML(u, c){
     ${u.stage ? `<div class="u-stars">${'★'.repeat(u.stage)}</div>` : ''}
     ${u.ab.includes('dodge') && !u.dodged ? '<span class="shield" title="Esquive"></span>' : ''}
     ${u.need ? `<div class="xp"><i style="width:${Math.min(100, u.xp / u.need * 100)}%"></i></div>` : ''}
+    ${(() => { const A = advOf(u, side, i); return A.adv ? `<span class="advb" title="Avantage : ${EL_NAME[u.el]} › ${EL_NAME[A.d.el]}, dégâts doublés contre la créature d'en face">×2</span>` : ''; })()}
     <span class="hpmax" aria-hidden="true"><b>${h}</b> / ${maxHp(u, c)} PV${u.dmg ? `<small>${u.dmg} dégât${u.dmg > 1 ? 's' : ''} subi${u.dmg > 1 ? 's' : ''}</small>` : '<small>intacte</small>'}</span>
     <span class="stat atk ${bon ? 'buff' : ''}">${a}</span><span class="stat hp ${bon ? 'buff' : ''} ${u.dmg ? 'hurt' : ''}">${h}</span>
     ${S.duo ? `<span class="own own-${u.owner === 0 ? 'me' : u.owner === 2 ? 'ally' : 'foe'}" title="${S.players[u.owner].label}">${heroPic(deckOf(u.owner), S.players[u.owner].deckId)}</span>` : ''}
   </div>`;
+}
+function previewAdv(side, i){
+  if (sel === null || S.active !== 0) return '';
+  const id = S.players[0].hand[sel], d = CARDS[id]; if (!d || d.type === 'spell') return '';
+  const f = facing(side, i); if (!f) return '';
+  const good = BEATS[d.el] === f.el && !hasTalent(S, f.owner, 'brume'), bad = BEATS[f.el] === d.el && !hasTalent(S, 0, 'brume');
+  return (good ? `<span class="prev good" title="Ta créature infligera des dégâts doublés à ${f.name}">×2 infligés</span>` : '') + (bad ? `<span class="prev bad" title="${f.name} infligera des dégâts doublés à ta créature">×2 subis</span>` : '');
 }
 function cellHTML(side, i, tg, top){
   const c = S.board[side][i];
@@ -192,7 +206,7 @@ function cellHTML(side, i, tg, top){
   const label = `${EL_NAME[c.el]}${c.u ? ' : ' + c.u.name : ', vide'}`;
   return `<div class="cell el-${c.el} ${isT ? 'tgt' : ''}" data-side="${side}" data-i="${i}" data-top="${top ? 1 : 0}" ${vigie && vigie.side === side && vigie.i === i ? 'data-vsel="1"' : ''} role="button" tabindex="0" aria-label="${label}">
     <div class="terrain"></div>
-    <div class="slot">${c.u ? unitHTML(c.u, c) : sigil(c.el, 'wm')}</div>
+    <div class="slot">${c.u ? unitHTML(c.u, c, side, i) : sigil(c.el, 'wm')}</div>${isT ? previewAdv(side, i) : ''}
     <div class="plate">${sigil(c.el)}${EL_NAME[c.el]}</div>
   </div>`;
 }
@@ -214,6 +228,9 @@ function unitInfo(side, i){
   const c = S.board[side][i], u = c.u, d = CARDS[u.card];
   const lines = [];
   if (bonus(u, c)) lines.push('Sur son élément : +1/+1.');
+  { const A = advOf(u, side, i);
+    if (A.adv) lines.push(`<b class="adv-t">Avantage ×2</b> : ${EL_NAME[u.el]} › ${EL_NAME[A.d.el]}, elle inflige des dégâts doublés à ${A.d.name}.`);
+    if (A.weak) lines.push(`<b class="weak-t">Désavantage ×2</b> : ${EL_NAME[A.d.el]} › ${EL_NAME[u.el]}, elle subit des dégâts doublés de ${A.d.name}.`); }
   if (u.ab.length) lines.push(u.ab.map(a => AB[a]).join(' '));
   if (u.sick) lines.push("Vient d'arriver : attaquera à la fin de son prochain tour.");
   if (u.need){
@@ -362,6 +379,14 @@ function renderFFA(tg){
   $('#btnVigie').hidden = !(hasTalent(S, 0, 'vigie') && S.active === 0 && !busy && !P.vig && !over());
 }
 
+function advBurst(host, a, d){
+  if (!host) return;
+  const f = document.createElement('span');
+  f.className = 'advburst';
+  f.innerHTML = `<b>×2</b>${a && d ? `<small><i class="el-${a}">${EL_NAME[a]}</i> › <i class="el-${d}">${EL_NAME[d]}</i></small>` : '<small>Avantage</small>'}`;
+  host.appendChild(f);
+  setTimeout(() => f.remove(), 1400);
+}
 function floatText(host, text, cls){
   if (!host) return;
   const f = document.createElement('span');
@@ -400,7 +425,7 @@ const heroEl = t => S.ffa ? $('#fp' + t) : $('#hero' + t);
 function flushFx(){
   const anim = !reduced;
   let atkCol = null, delay = 0;
-  let traded = false;
+  let traded = false; const supers = new Set();
   for (const e of S.fx){
     if (tradeFx(e)) traded = true;
     const cell = e.i !== undefined ? cellEl(e.side, e.i) : null;
@@ -414,11 +439,12 @@ function flushFx(){
       case 'cast': onCastFx(e); break;
       case 'dmg': later(() => {
         SND.play('slash', {big: e.n >= 4});
-        floatText(cell, '−' + e.n, 'dmg');
+        if (supers.has(e.side + ':' + e.i)){ supers.delete(e.side + ':' + e.i); floatText(cell, '−' + e.n, 'dmg crit'); }
+        else floatText(cell, '−' + e.n, 'dmg');
         if (unit) unit.classList.add('shake');
         if (anim){ slash(cell, atkCol || ELC.F, e.n >= 4); sparks(cell, atkCol || ELC.F, 7); }
       }); break;
-      case 'super': later(() => { SND.play('crit'); floatText(cell, '×2', 'info'); if (anim && cell){ cell.classList.remove('crit'); void cell.offsetWidth; cell.classList.add('crit'); } }); break;
+      case 'super': supers.add(e.side + ':' + e.i); later(() => { SND.play('crit'); advBurst(cell, e.a, e.d); if (anim && cell){ cell.classList.remove('crit'); void cell.offsetWidth; cell.classList.add('crit'); } }); break;
       case 'dodge': later(() => { SND.play('dodge'); floatText(cell, 'Esquive', 'info'); if (unit) unit.classList.add('sidestep'); }); break;
       case 'evolve': later(() => { SND.play('evolve', {legend: !!(S.board[e.side] && S.board[e.side][e.i] && S.board[e.side][e.i].u && S.board[e.side][e.i].u.stage === 2)}); if (unit) unit.classList.add('evolve'); floatText(cell, 'Évolution !', 'evo'); if (anim) sparks(cell, '#ecd6ff', 14); }); break;
       case 'terra': SND.play('terra', {el: S.board[e.side] && S.board[e.side][e.i] ? S.board[e.side][e.i].el : 'N'}); if (cell){ cell.classList.remove('ripple'); void cell.offsetWidth; cell.classList.add('ripple'); } break;

@@ -479,6 +479,23 @@ body:not(.on-menu)::before{content:""; position:fixed; inset:0; z-index:-1; poin
 .sv-msg{min-height:1.2em; font-weight:700; color:#f3d58a}
 .sv-msg.err{color:#ff9a8a}
 
+/* Avantage élémentaire */
+.advb{position:absolute; top:-6px; right:-4px; z-index:4; padding:1px 5px; border-radius:999px; font:800 11px/1.2 var(--f-display); color:#2a1206;
+  background:linear-gradient(180deg,#fff1b8,#ff9a3c); box-shadow:0 0 0 1.5px #000, 0 0 8px rgba(255,150,60,.9)}
+.unit.go .advb{animation:advPulse 1s ease-in-out infinite}
+@keyframes advPulse{50%{transform:scale(1.2); box-shadow:0 0 0 1.5px #000, 0 0 14px 3px rgba(255,150,60,1)}}
+.prev{position:absolute; left:50%; transform:translateX(-50%); z-index:6; white-space:nowrap; padding:2px 7px; border-radius:999px; font:800 11px/1.2 var(--f-body); box-shadow:0 0 0 1.5px #000, 0 2px 6px rgba(0,0,0,.7); pointer-events:none}
+.prev.good{top:20%; color:#2a1206; background:linear-gradient(180deg,#fff1b8,#ff9a3c)}
+.prev.bad{top:44%; color:#fff; background:linear-gradient(180deg,#e0574a,#8a1e14)}
+.advburst{position:absolute; left:50%; top:22%; z-index:7; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; pointer-events:none; animation:advBurst 1.3s ease-out forwards}
+.advburst b{font:900 34px/1 var(--f-display); color:#ffd27a; text-shadow:0 0 4px #000, 0 0 2px #000, 0 0 16px rgba(255,140,40,1), 0 0 30px rgba(255,90,20,.8)}
+.advburst small{margin-top:2px; padding:2px 7px; border-radius:999px; background:rgba(14,9,5,.9); box-shadow:0 0 0 1px #c9a14e; font:700 10.5px/1.2 var(--f-body); color:#f3e7cc; white-space:nowrap}
+.advburst small i{font-style:normal; font-weight:800}
+.advburst .el-F{color:#ff9a3c} .advburst .el-E{color:#66e0e6} .advburst .el-T{color:#a8d65a} .advburst .el-A{color:#a8e4ff}
+@keyframes advBurst{0%{opacity:0; transform:translateX(-50%) scale(2.2)}18%{opacity:1; transform:translateX(-50%) scale(1)}75%{opacity:1}100%{opacity:0; transform:translateX(-50%) translateY(-18px)}}
+.float.dmg.crit{font-size:30px; color:#ffb03a; text-shadow:0 2px 4px #000, 0 0 12px rgba(255,120,30,.95); top:48%}
+.adv-t{color:#ffb03a} .weak-t{color:#ff8a7a}
+
 /* Duel en ligne */
 .net-code{display:flex; flex-direction:column; align-items:center; gap:6px; padding:16px 12px}
 .net-code small{color:var(--muted); font-size:12px; letter-spacing:.08em; text-transform:uppercase}
