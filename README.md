@@ -12,12 +12,16 @@ Les créatures gagnent de l'expérience et **évoluent selon l'élément de la c
 
 ## Contenu du jeu
 
-- **Modes** : Duel contre l'IA, parties en ligne avec un code (Duel, Duo, Mêlée ; places libres tenues par des IA), Duo (2 contre 2) et Mêlée (chacun pour soi à 3 ou 4 joueurs).
-- **IA** : 3 niveaux de difficulté (Facile, Normal, Difficile).
+- **Modes** :
+  - **Partie contre l'IA** : duel à 30 PV, l'IA tire son deck au sort ; 3 niveaux de difficulté (Facile, Normal, Difficile).
+  - **Duo des Éléments** : 2 contre 2, avec une IA alliée contre deux IA.
+  - **Mêlée** : chacun pour soi à 3 ou 4 joueurs, contre des IA.
+  - **En ligne** : Duel, Duo ou Mêlée entre amis avec un code de salon ; les places libres sont tenues par des IA, et un joueur qui part est remplacé par une IA.
+  - **Tutoriel** : une première partie guidée, à 20 PV.
 - **Decks** : 4 familles (Orage, Profondeurs, Cimes, Vapeur), avec un talent propre à chacune en Mêlée.
 - **Collection** : boosters, fabrication de cartes, construction de decks et progression par niveaux.
 - **Apparences rares** : cartes prismatiques, et cartes « pleine image » pour les légendaires.
-- **Tutoriel** guidé, musique et bruitages générés dans le navigateur, animations.
+- **Ambiance** : musiques orchestrales, bruitages et animations.
 - **Version physique** : le kit d'impression est dans `impression/`.
 
 La progression est sauvegardée dans le navigateur (localStorage), séparément sur chaque appareil.
