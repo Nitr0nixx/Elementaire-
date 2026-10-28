@@ -173,11 +173,14 @@ function heroHTML(t){
 function unitHTML(u, c){
   const a = effAtk(u, c), h = effHp(u, c), bon = bonus(u, c) === 1;
   const fl = u.owner === 0 && !u.stage && isFull(u.card), pz = !fl && u.owner === 0 && isPrism(u.card);
-  return `<div class="unit el-${u.el} st-${u.stage} ${u.sick ? 'sick' : ''} ${bon ? 'match' : ''} ${pz ? 'prism' : ''} ${fl ? 'fullart' : ''}">
+  const go = !u.sick && u.owner === S.active && !over();
+  return `<div class="unit el-${u.el} st-${u.stage} ${u.sick ? 'sick' : 'rdy'} ${go ? 'go' : ''} ${bon ? 'match' : ''} ${pz ? 'prism' : ''} ${fl ? 'fullart' : ''}">
     ${fl ? `<div class="u-img"><img src="img/${u.card}-full.jpg" alt="" draggable="false"></div><div class="u-holo"><div class="glint gold"></div></div>` : unitArt(u)}${pz ? '<div class="u-holo"><div class="holo"></div><div class="glint"></div></div>' : ''}
+    <span class="ustate" title="${u.sick ? "Au repos : vient d'arriver, attaquera au prochain tour de son camp" : 'Prête à attaquer'}">${u.sick ? '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 2h12v2h-1v3.2a5 5 0 0 1-2.3 4.2L13.4 12l1.3.6A5 5 0 0 1 17 16.8V20h1v2H6v-2h1v-3.2a5 5 0 0 1 2.3-4.2l1.3-.6-1.3-.6A5 5 0 0 1 7 7.2V4H6zm3 2v3.2c0 1 .6 1.9 1.5 2.3l1.5.7 1.5-.7A2.6 2.6 0 0 0 15 7.2V4z"/></svg>' : '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M20.5 2.5 21.5 3.5 13 12l1.6 1.6-1.4 1.4-1.6-1.6-3.4 3.4.9.9-1.4 1.4-.9-.9-2.3 2.3-2.1-2.1 2.3-2.3-.9-.9 1.4-1.4.9.9 3.4-3.4L8.4 9.8l1.4-1.4L11.4 10z"/></svg>'}</span>
     ${u.stage ? `<div class="u-stars">${'★'.repeat(u.stage)}</div>` : ''}
     ${u.ab.includes('dodge') && !u.dodged ? '<span class="shield" title="Esquive"></span>' : ''}
     ${u.need ? `<div class="xp"><i style="width:${Math.min(100, u.xp / u.need * 100)}%"></i></div>` : ''}
+    <span class="hpmax" aria-hidden="true"><b>${h}</b> / ${maxHp(u, c)} PV${u.dmg ? `<small>${u.dmg} dégât${u.dmg > 1 ? 's' : ''} subi${u.dmg > 1 ? 's' : ''}</small>` : '<small>intacte</small>'}</span>
     <span class="stat atk ${bon ? 'buff' : ''}">${a}</span><span class="stat hp ${bon ? 'buff' : ''} ${u.dmg ? 'hurt' : ''}">${h}</span>
     ${S.duo ? `<span class="own own-${u.owner === 0 ? 'me' : u.owner === 2 ? 'ally' : 'foe'}" title="${S.players[u.owner].label}">${heroPic(deckOf(u.owner), S.players[u.owner].deckId)}</span>` : ''}
   </div>`;
@@ -263,6 +266,8 @@ function render(){
     return `<button class="card el-${CARDS[id].el} ${ok ? '' : 'dim'} ${sel === hi ? 'sel' : ''}" data-hi="${hi}" type="button" aria-label="${CARDS[id].name}, coût ${CARDS[id].cost}">${cardFace(cardData(id))}</button>`;
   }).join('');
   markDrawn();
+  renderPlayLog(false);
+  renderTrades(false);
   const turnWho = S.active === 0 ? (busy ? 'Combat…' : 'À toi') : S.duo ? `${SHORT[S.active]}…` : S.ffa ? `${S.players[S.active].label}…` : 'Adversaire…';
   const turnTxt = over() ? 'Partie terminée' : `Tour ${Math.ceil(S.turn / S.players.length)} · ${turnWho}`;
   $('#turnLabel').textContent = turnTxt;
@@ -276,6 +281,10 @@ function render(){
   } else if (inspect && S.board[inspect.side][inspect.i].u){
     const u = S.board[inspect.side][inspect.i].u;
     html = `<div class="card el-${u.el}">${cardFace(unitData(inspect.side, inspect.i))}</div><div class="info-txt">${unitInfo(inspect.side, inspect.i)}</div>`;
+  } else if (tradePick !== null && tradeInfoHTML()){
+    html = tradeInfoHTML();
+  } else if (logPick !== null && logInfoHTML()){
+    html = logInfoHTML();
   } else if (vigie !== null){
     html = `<div class="info-txt"><h3>Vigie</h3><p>${vigie === true ? 'Touche une première case de tes fronts.' : 'Touche une deuxième case : leurs jetons d\'élément seront échangés.'}</p><p class="hint"><button class="ghost banner" type="button" data-vigie-cancel><span>Annuler</span></button></p></div>`;
   } else if (inspectP !== null){
@@ -390,7 +399,9 @@ const heroEl = t => S.ffa ? $('#fp' + t) : $('#hero' + t);
 function flushFx(){
   const anim = !reduced;
   let atkCol = null, delay = 0;
+  let traded = false;
   for (const e of S.fx){
+    if (tradeFx(e)) traded = true;
     const cell = e.i !== undefined ? cellEl(e.side, e.i) : null;
     const unit = cell && cell.querySelector('.unit');
     const later = fn => delay ? setTimeout(fn, delay) : fn();
@@ -408,7 +419,7 @@ function flushFx(){
       }); break;
       case 'super': later(() => { SND.play('crit'); floatText(cell, '×2', 'info'); if (anim && cell){ cell.classList.remove('crit'); void cell.offsetWidth; cell.classList.add('crit'); } }); break;
       case 'dodge': later(() => { SND.play('dodge'); floatText(cell, 'Esquive', 'info'); if (unit) unit.classList.add('sidestep'); }); break;
-      case 'evolve': later(() => { SND.play('evolve'); if (unit) unit.classList.add('evolve'); floatText(cell, 'Évolution !', 'evo'); if (anim) sparks(cell, '#ecd6ff', 14); }); break;
+      case 'evolve': later(() => { SND.play('evolve', {legend: !!(S.board[e.side] && S.board[e.side][e.i] && S.board[e.side][e.i].u && S.board[e.side][e.i].u.stage === 2)}); if (unit) unit.classList.add('evolve'); floatText(cell, 'Évolution !', 'evo'); if (anim) sparks(cell, '#ecd6ff', 14); }); break;
       case 'terra': SND.play('terra', {el: S.board[e.side] && S.board[e.side][e.i] ? S.board[e.side][e.i].el : 'N'}); if (cell){ cell.classList.remove('ripple'); void cell.offsetWidth; cell.classList.add('ripple'); } break;
       case 'face': later(() => {
         SND.play('hero');
@@ -424,6 +435,7 @@ function flushFx(){
     }
   }
   S.fx = [];
+  if (traded) renderTrades(true);
 }
 function step(){ render(); flushFx(); }
 
@@ -437,6 +449,7 @@ async function runCombat(p){
 async function endPlayerTurn(){
   if (busy || S.active !== 0 || over()) return;
   if (TUTO && !tutoAllowEnd()) return;
+  if (S.net){ netEndTurn(); return; }
   busy = true; sel = null; inspect = null; vigie = null; inspectP = null; step();
   await runCombat(0);
   if (!over()){ startTurn(S, nextPlayer(S, 0)); step(); await sleep(pace(500)); }
@@ -447,7 +460,7 @@ async function advance(){
   if (running) return;
   running = true; busy = true;
   try {
-    while (!over() && S.active !== 0) await aiTurn(S.active);
+    while (!over() && S.active !== 0 && !S.net) await aiTurn(S.active);
   } finally { running = false; busy = false; step(); if (!over() && S.active === 0) turnBanner('À toi de jouer !'); }
 }
 let running = false;
@@ -466,18 +479,28 @@ function showResult(){
   const w = S.winner;
   const title = w === 0 ? 'Victoire' : w === 1 ? 'Défaite' : 'Égalité';
   const mirror = deckOf(0) === deckOf(1);
-  const sub = S.duo
+  const sub = S.duo && S.net ? (w === 0 ? 'Ton équipe l\'emporte !' : w === 1 ? "L'équipe adverse l'emporte cette fois." : 'Les deux équipes tombent en même temps.')
+    : S.duo
     ? (w === 0 ? `Ton allié et toi avez vaincu ${deckOf(1).the} et ${deckOf(3).the}.` : w === 1 ? `${cap(deckOf(1).the)} et ${deckOf(3).the} l'emportent cette fois.` : 'Les deux équipes tombent en même temps.')
+    : S.net ? (w === 0 ? 'Tu as battu ton adversaire !' : w === 1 ? "Ton adversaire l'emporte cette fois." : 'Les deux héros tombent en même temps.')
     : (w === 0 ? `Tu as vaincu ${deckOf(1).the}${mirror ? ' adverses' : ''}.` : w === 1 ? `${cap(deckOf(1).the)}${mirror ? ' adverses' : ''} l'emportent cette fois.` : 'Les deux héros tombent en même temps.');
-  $('#resultBody').innerHTML = `<h2>${title}</h2><p>${sub}</p><p style="color:var(--muted)">Partie jouée en ${Math.ceil(S.turn / S.players.length)} tours.</p>${grantRewards()}<button class="btn-end m-gold" type="button" id="btnAgain"><span>Rejouer</span></button><div class="menu-row"><button class="ghost banner" type="button" id="btnResMenu"><span>Menu principal</span></button></div>`;
+  $('#resultBody').innerHTML = `<h2>${title}</h2><p>${sub}</p><p style="color:var(--muted)">Partie jouée en ${Math.ceil(S.turn / S.players.length)} tours.</p>${grantRewards()}${resultButtons()}`;
   $('#resultModal').hidden = false;
   celebrate(w === 0);
-  $('#btnAgain').onclick = () => { $('#resultModal').hidden = true; if (S.custom){ DECKS[4] = S.custom; pick = 4; } newMatch(); };
-  $('#btnResMenu').onclick = () => { $('#resultModal').hidden = true; S.done = true; showMenu(); };
+  wireResultButtons();
 }
 
 function resultButtons(){
-  return `<button class="btn-end m-gold" type="button" id="btnAgain"><span>Rejouer</span></button><div class="menu-row"><button class="ghost banner" type="button" id="btnResMenu"><span>Menu principal</span></button></div>`;
+  const label = !S.net ? 'Rejouer' : NET.role === 'host' ? 'Relancer avec le même salon' : "En attente de l'hôte…";
+  const dis = S.net && (NET.role !== 'host' || !NET.live);
+  return `<button class="btn-end m-gold" type="button" id="btnAgain" ${dis ? 'disabled' : ''}><span>${label}</span></button><div class="menu-row"><button class="ghost banner" type="button" id="btnResMenu"><span>Menu principal</span></button></div>`;
+}
+function wireResultButtons(){
+  $('#btnAgain').onclick = () => {
+    if (S.net){ netRematch(); return; }
+    $('#resultModal').hidden = true; if (S.custom){ DECKS[4] = S.custom; pick = 4; } newMatch();
+  };
+  $('#btnResMenu').onclick = () => { $('#resultModal').hidden = true; if (S.net) netLeave(); S.done = true; showMenu(); };
 }
 function showResultFFA(){
   const N = S.players.length, order = S.outOrder || [];
@@ -487,14 +510,13 @@ function showResultFFA(){
   else {
     const place = N - order.indexOf(0);
     title = place === 2 ? '2e place' : `${place}e place`;
-    const w = S.winner >= 0 ? S.players[S.winner].label : null;
-    sub = `Tu es éliminé.${w ? ` ${w} l'emporte avec ${DECKS[S.players[S.winner].deckId].the}.` : ''}`;
+    const w = S.winner !== null && S.winner >= 0 && S.players[S.winner] ? S.players[S.winner].label : null;
+    sub = `Tu es éliminé.${w ? ` ${w} l'emporte avec ${DECKS[S.players[S.winner].deckId].the}.` : S.net ? ' La partie continue entre les autres joueurs.' : ''}`;
   }
   $('#resultBody').innerHTML = `<h2>${title}</h2><p>${sub}</p><p style="color:var(--muted)">Mêlée à ${N} joueurs · ${Math.ceil(S.turn / N)} tours.</p>${grantRewards()}${resultButtons()}`;
   $('#resultModal').hidden = false;
   celebrate(S.winner === 0);
-  $('#btnAgain').onclick = () => { $('#resultModal').hidden = true; if (S.custom){ DECKS[4] = S.custom; pick = 4; } newMatch(); };
-  $('#btnResMenu').onclick = () => { $('#resultModal').hidden = true; S.done = true; showMenu(); };
+  wireResultButtons();
 }
 function onCell(side, i){
   if (over()) return;
@@ -505,7 +527,7 @@ function onCell(side, i){
     if (vigie === true){ vigie = {side, i}; render(); return; }
     if (vigie.side === side && vigie.i === i){ vigie = true; render(); return; }
     const w = [vigie.side, vigie.i, side, i]; vigie = null;
-    if (S.board[w[0]][w[1]].el !== S.board[side][i].el) doVigie(S, 0, w);
+    if (S.board[w[0]][w[1]].el !== S.board[side][i].el){ doVigie(S, 0, w); netAfterVigie(w); }
     step(); return;
   }
   if (sel !== null){
@@ -513,6 +535,7 @@ function onCell(side, i){
       const hi = sel; sel = null;
       flyFrom = rectOf(document.querySelector(`.hand .card[data-hi="${hi}"]`));
       play(S, 0, hi, {side, i});
+      netAfterPlay(hi, {side, i});
       inspect = S.board[side][i].u ? {side, i} : null;
       step();
       return;
@@ -522,7 +545,20 @@ function onCell(side, i){
   inspect = S.board[side][i].u ? {side, i} : null;
   render();
 }
-$('#board').addEventListener('click', e => { const c = e.target.closest('.cell'); if (c) onCell(+c.dataset.side, +c.dataset.i); });
+$('#board').addEventListener('click', e => { if (peekUsed){ peekUsed = false; return; } const c = e.target.closest('.cell'); if (c) onCell(+c.dataset.side, +c.dataset.i); });
+// Appui long sur une créature : affiche ses PV actuels et maximum
+let peekT = null, peekEl = null, peekUsed = false;
+function peekEnd(){ clearTimeout(peekT); if (peekEl) peekEl.classList.remove('peek'); peekEl = null; }
+['#board', '#ffa'].forEach(sel => {
+  const root = $(sel);
+  root.addEventListener('pointerdown', e => {
+    const u = e.target.closest('.unit'); if (!u) return;
+    peekEnd(); peekUsed = false;
+    peekT = setTimeout(() => { peekEl = u; u.classList.add('peek'); peekUsed = true; if (navigator.vibrate) try { navigator.vibrate(10); } catch (x) {} }, 380);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => root.addEventListener(t, peekEnd));
+  root.addEventListener('contextmenu', e => { if (e.target.closest('.unit')) e.preventDefault(); });
+});
 $('#ffa').addEventListener('click', e => {
   const c = e.target.closest('.cell'); if (c) return onCell(+c.dataset.side, +c.dataset.i);
   const f = e.target.closest('.fp'); if (f){ inspectP = +f.dataset.p; sel = null; inspect = null; render(); }
@@ -545,7 +581,7 @@ $('#hand').addEventListener('click', e => {
   if (TUTO && !tutoAllowCard(hi)) return;
   const d = CARDS[S.players[0].hand[hi]];
   if (d.target === 'none' && !busy && S.active === 0 && targets(S, 0, hi).length){
-    flyFrom = rectOf(b); sel = null; inspect = null; play(S, 0, hi, {side:-1, i:-1}); step(); return;
+    flyFrom = rectOf(b); sel = null; inspect = null; play(S, 0, hi, {side:-1, i:-1}); netAfterPlay(hi, {side:-1, i:-1}); step(); return;
   }
   sel = sel === hi ? null : hi; inspect = null; inspectP = null; vigie = null;
   render();
@@ -600,8 +636,9 @@ function renderDecks(){
     </button>`).join('');
 }
 
-function showPanel(id){ ['#mainPanel', '#deckPanel', '#starterPanel'].forEach(s => { $(s).hidden = s !== id; }); $('#showcase').hidden = id !== '#mainPanel'; $('#profile').hidden = id === '#starterPanel' || !SAVE; }
+function showPanel(id){ ['#mainPanel', '#deckPanel', '#starterPanel', '#netPanel'].forEach(s => { $(s).hidden = s !== id; }); $('#showcase').hidden = id !== '#mainPanel'; $('#profile').hidden = id === '#starterPanel' || !SAVE; }
 function newMatch(){
+  if (S && S.net) netLeave();
   sel = null; inspect = null; busy = false; running = false; vigie = null; inspectP = null;
   let first = Math.random() < .5 ? 0 : 1;
   const fam = pick < 4 ? pick : DECKS[pick].fam;
@@ -638,14 +675,19 @@ function dealAnim(){
   t.classList.remove('deal'); void t.offsetWidth; t.classList.add('deal');
   setTimeout(() => t.classList.remove('deal'), 1200);
 }
+const FAM_TRACK = ['orage', 'profondeurs', 'cimes', 'vapeur'];
+function gameTrack(){ const D = deckOf(0), f = D && D.fam !== undefined ? D.fam : S.players[0].deckId; return FAM_TRACK[f] || 'menu'; }
 function showGame(){
   screen = 'game';
+  SND.setTrack(gameTrack());
+  $('#btnNew').hidden = !!S.net;
   $('#menu').hidden = true; $('#game').hidden = false; document.body.classList.remove('on-menu');
   render();
   renderSoundBtns();
 }
 function showMenu(){
   screen = 'menu';
+  SND.setTrack('menu');
   $('#game').hidden = true; $('#coll').hidden = true; $('#menu').hidden = false; $('#mMultiNote').hidden = true; showPanel(SAVE ? '#mainPanel' : '#starterPanel');
   renderProfile();
   document.body.classList.add('on-menu');
@@ -671,6 +713,9 @@ function openDecks(m){
   $('#vsTitle').textContent = m === 'duo' ? 'Ton allié et tes adversaires' : m === 'ffa' ? 'Tes adversaires' : 'Ton adversaire';
   $('#vsText').textContent = m === 'duo' ? "Les trois autres decks sont répartis au hasard entre ton allié IA et les deux adversaires IA." : m === 'ffa' ? "Les autres decks vont aux IA, et les places autour de la table sont tirées au sort. Chaque deck a un talent propre à la Mêlée." : "L'IA tire son deck au sort au début de la partie. Il peut être identique au tien.";
   $('#ffaCount').hidden = m !== 'ffa';
+  document.querySelector('#deckPanel .diff').hidden = m === 'net';
+  document.querySelector('#deckPanel .vs').hidden = m === 'net';
+  $('#mStart').querySelector('span').textContent = m === 'net' ? 'Choisir ce deck' : 'Lancer la partie';
   try { $('#mStart').focus({preventScroll:true}); } catch (e) {}
 }
 $('#mAI').addEventListener('click', () => openDecks('ai'));
@@ -678,10 +723,10 @@ $('#mDuo').addEventListener('click', () => openDecks('duo'));
 $('#mFfa').addEventListener('click', () => openDecks('ffa'));
 let ffaN = 4;
 $('#ffaCount').addEventListener('click', e => { const b = e.target.closest('[data-n]'); if (!b) return; ffaN = +b.dataset.n; document.querySelectorAll('#ffaCount [data-n]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.n === ffaN))); });
-$('#mStart').addEventListener('click', () => { if (registerActive()) newMatch(); });
-$('#mBack').addEventListener('click', () => showPanel('#mainPanel'));
+$('#mStart').addEventListener('click', () => { if (!registerActive()) return; if (mode === 'net') openNet(); else newMatch(); });
+$('#mBack').addEventListener('click', () => { if (mode === 'net') openNet(); else showPanel('#mainPanel'); });
 $('#mContinue').addEventListener('click', () => { showGame(); if (S.active !== 0 && S.winner === null) advance(); });
-$('#mMulti').addEventListener('click', () => { $('#mMultiNote').hidden = false; });
+$('#mMulti').addEventListener('click', () => openNet());
 $('#mRules').addEventListener('click', () => { $('#rules').hidden = false; });
 $('#mTuto').addEventListener('click', () => startTutorial());
 $('#btnMenu').addEventListener('click', () => { if (!busy){ sel = null; inspect = null; showMenu(); } });

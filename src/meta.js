@@ -218,7 +218,7 @@ let collTab = 'decks', filterEl = 'all', editing = null, packReveal = null, deta
 function openColl(tab){
   collTab = tab || collTab; editing = null; packReveal = null; detailId = null;
   $('#menu').hidden = true; $('#game').hidden = true; $('#coll').hidden = false;
-  document.body.classList.add('on-menu'); screen = 'coll';
+  document.body.classList.add('on-menu'); screen = 'coll'; SND.setTrack('menu');
   renderColl(); window.scrollTo(0, 0);
 }
 function closeColl(){ $('#coll').hidden = true; showMenu(); }
@@ -293,14 +293,94 @@ function shopHTML(){
       <p class="c-note">Les Éclats sont gagnés en jouant, jamais achetés.</p></div>
   </div>`;
 }
+// --- Ouverture de booster : paquet à déchirer, cartes distribuées, effets selon la rareté ---
+let packStage = 'cards', packDealt = true, packBusy = false;
+const TIER_RANK = {fl:0, pz:1, L:2, E:3, R:4, C:5};
+const TIER_COL = {C:'#efe6d2', R:'#6fa8ff', E:'#c08cff', L:'#ffcc66', pz:'#ff8ae0', fl:'#ffd27a'};
+const TIER_WORD = {E:'Épique', L:'Légendaire', pz:'Prismatique', fl:'Pleine image'};
+const packTier = c => c.fl ? 'fl' : c.pz ? 'pz' : RARITY[c.id];
+const bestTier = list => list.map(packTier).sort((a, b) => TIER_RANK[a] - TIER_RANK[b])[0];
+function rvTag(c){
+  return `<span class="rv-tag ${c.pz ? 'pz' : ''} ${c.fl ? 'fl' : ''}">${c.fl ? (c.flNew ? 'Pleine image !' : `Pleine image en double · +${c.dust} Éclats`) : c.prism ? 'Prismatique !' : c.pz ? `Prismatique en double · +${c.dust} Éclats` : c.dust ? `Doublon · +${c.dust} Éclats` : c.isNew ? 'Nouvelle !' : RAR[RARITY[c.id]].name}</span>`;
+}
+function rvActs(){
+  return packReveal.every(c => c.shown)
+    ? `${SAVE.packs ? `<button class="btn-end m-gold" type="button" id="pkAgain"><span>Ouvrir le suivant<small>${SAVE.packs} en réserve</small></span></button>` : ''}<button class="ghost banner" type="button" id="pkDone"><span>Voir ma collection</span></button>`
+    : `<button class="ghost banner" type="button" id="pkAll"><span>Tout révéler</span></button>`;
+}
 function revealHTML(){
-  const all = packReveal.every(c => c.shown);
+  if (packStage === 'pack'){
+    const bt = bestTier(packReveal);
+    return `<h2 class="panel-title"><span class="banner"><span>Booster</span></span></h2>
+      <div class="bp-stage"><button class="bpack t-${bt}" id="bpOpen" type="button" aria-label="Ouvrir le booster">
+        <span class="bp-body"><span class="bp-crimp"></span><span class="bp-face"><img src="img/dos.jpg" alt="" draggable="false"></span><span class="bp-name">Booster des Éléments</span><span class="bp-crimp b"></span></span>
+        <span class="bp-shine"></span></button>
+      <p class="c-note bp-hint">Touche le booster pour l'ouvrir</p></div>`;
+  }
+  const deal = !packDealt; packDealt = true;
   return `<h2 class="panel-title"><span class="banner"><span>Booster</span></span></h2>
-    <div class="reveal">${packReveal.map((c, k) => `<button class="rv ${c.shown ? 'shown' : ''} r-${RARITY[c.id]} ${c.pz ? 'pz' : ''} ${c.fl ? 'fl' : ''}" type="button" data-rv="${k}">
+    <div class="reveal ${deal ? 'deal' : ''}">${packReveal.map((c, k) => `<button class="rv ${c.shown ? 'shown' : ''} r-${RARITY[c.id]} t-${packTier(c)} ${c.pz ? 'pz' : ''} ${c.fl ? 'fl' : ''}" type="button" data-rv="${k}" style="--k:${k}" aria-label="${c.shown ? CARDS[c.id].name : 'Carte face cachée'}">
       <span class="rv-in"><span class="rv-back"><img src="img/dos.jpg" alt=""></span><span class="rv-front card el-${CARDS[c.id].el}">${cardFace({...cardData(c.id), prism: c.pz, full: !!c.fl})}</span></span>
-      ${c.shown ? `<span class="rv-tag ${c.pz ? 'pz' : ''} ${c.fl ? 'fl' : ''}">${c.fl ? (c.flNew ? 'Pleine image !' : `Pleine image en double · +${c.dust} Éclats`) : c.prism ? 'Prismatique !' : c.pz ? `Prismatique en double · +${c.dust} Éclats` : c.dust ? `Doublon · +${c.dust} Éclats` : c.isNew ? 'Nouvelle !' : RAR[RARITY[c.id]].name}</span>` : ''}</button>`).join('')}</div>
-    ${all ? `<div class="rv-acts">${SAVE.packs ? `<button class="btn-end m-gold" type="button" id="pkAgain"><span>Ouvrir le suivant<small>${SAVE.packs} en réserve</small></span></button>` : ''}<button class="ghost banner" type="button" id="pkDone"><span>Voir ma collection</span></button></div>`
-      : `<div class="rv-acts"><button class="ghost banner" type="button" id="pkAll"><span>Tout révéler</span></button></div>`}`;
+      ${c.shown ? rvTag(c) : ''}</button>`).join('')}</div>
+    <div class="rv-acts">${rvActs()}</div>`;
+}
+function startPack(){
+  const r = openPack(); if (!r) return;
+  packReveal = r.map(c => ({...c, shown:false})); packStage = reduced ? 'cards' : 'pack'; packDealt = reduced; packBusy = false;
+  renderColl();
+}
+function tearPack(){
+  if (packBusy || packStage !== 'pack') return;
+  packBusy = true;
+  const bt = bestTier(packReveal), b = $('#bpOpen');
+  SND.play('tear', {t: bt});
+  if (b){ b.classList.add('tear'); }
+  setTimeout(() => {
+    flashScreen(bt, TIER_RANK[bt] <= 2 ? .9 : .55);
+    packStage = 'cards'; packBusy = false; renderColl();
+  }, TIER_RANK[bt] <= 2 ? 1250 : 850);
+}
+function flashScreen(t, o = .8){
+  if (reduced) return;
+  const f = document.createElement('div'); f.className = `pk-flash t-${t}`; f.style.setProperty('--o', o);
+  document.body.appendChild(f); setTimeout(() => f.remove(), 900);
+}
+function burst(host, col, n, r0, r1){
+  const d = document.createElement('span'); d.className = 'rvburst'; d.style.setProperty('--fc', col);
+  let s = '';
+  for (let k = 0; k < n; k++){
+    const a = (k / n) * Math.PI * 2 + Math.random() * .5, r = r0 + Math.random() * (r1 - r0);
+    s += `<i class="spark" style="--dx:${(Math.cos(a) * r).toFixed(0)}px; --dy:${(Math.sin(a) * r).toFixed(0)}px; --d:${(Math.random() * 120).toFixed(0)}ms"></i>`;
+  }
+  d.innerHTML = s; host.appendChild(d); setTimeout(() => d.remove(), 1100);
+}
+function revealOne(k){
+  const c = packReveal && packReveal[k]; if (!c || c.shown) return 0;
+  c.shown = true;
+  const t = packTier(c), b = document.querySelector(`.rv[data-rv="${k}"]`);
+  SND.play(c.pz || c.fl ? 'prism' : 'flip', {r: RARITY[c.id]});
+  if (t === 'L' || t === 'fl') setTimeout(() => SND.play('legend'), 180);
+  if (!b){ renderColl(); return 0; }
+  b.classList.add('shown'); b.setAttribute('aria-label', CARDS[c.id].name);
+  b.insertAdjacentHTML('beforeend', rvTag(c));
+  if (!reduced && t !== 'C'){
+    const fx = document.createElement('span'); fx.className = 'rvfx';
+    fx.innerHTML = `<i class="ring"></i>${TIER_RANK[t] <= 3 ? '<i class="rays"></i>' : ''}${TIER_WORD[t] ? `<i class="word">${TIER_WORD[t]}</i>` : ''}`;
+    b.appendChild(fx);
+    setTimeout(() => burst(b, TIER_COL[t], {R:10, E:16, L:26, pz:24, fl:30}[t], 50, t === 'R' ? 80 : 120), 260);
+    b.classList.add('popfx');
+    if (TIER_RANK[t] <= 2){ setTimeout(() => { flashScreen(t, .7); const cl = $('#coll'); cl.classList.remove('shake'); void cl.offsetWidth; cl.classList.add('shake'); }, 250); }
+  }
+  if (packReveal.every(x => x.shown)) setTimeout(() => { const a = document.querySelector('.rv-acts'); if (a) a.innerHTML = rvActs(); }, TIER_RANK[t] <= 3 ? 900 : 400);
+  return TIER_RANK[t] <= 3 ? 900 : 330;
+}
+async function revealAll(){
+  if (packBusy) return; packBusy = true;
+  const a = document.querySelector('.rv-acts'); if (a) a.innerHTML = '';
+  // les cartes les plus rares en dernier, pour le suspense
+  const order = packReveal.map((c, k) => k).filter(k => !packReveal[k].shown).sort((x, y) => TIER_RANK[packTier(packReveal[y])] - TIER_RANK[packTier(packReveal[x])]);
+  for (const k of order){ const w = revealOne(k); if (!packReveal) break; await new Promise(r => setTimeout(r, reduced ? 0 : w)); }
+  packBusy = false;
 }
 function showDetail(id){
   detailId = id;
@@ -358,9 +438,10 @@ $('#collBody').addEventListener('click', e => {
   }
   const cc = t.closest('.cc'); if (cc){ showDetail(cc.dataset.card); return; }
   if (t.closest('#pkBuy')){ if (SAVE.coins >= PACK_PRICE){ SND.play('coin'); SAVE.coins -= PACK_PRICE; SAVE.packs++; persist(); renderColl(); } return; }
-  if (t.closest('#pkOpen') || t.closest('#pkAgain')){ const r = openPack(); if (r){ packReveal = r.map(c => ({...c, shown:false})); renderColl(); } return; }
-  const rv = t.closest('[data-rv]'); if (rv && packReveal){ const c = packReveal[+rv.dataset.rv]; if (!c.shown) SND.play(c.pz || c.fl ? 'prism' : 'flip', {r: RARITY[c.id]}); c.shown = true; renderColl(); return; }
-  if (t.closest('#pkAll')){ const best = packReveal.filter(c => !c.shown).map(c => RARITY[c.id]).sort((a, b) => 'LERC'.indexOf(a) - 'LERC'.indexOf(b))[0]; SND.play(packReveal.some(c => !c.shown && (c.pz || c.fl)) ? 'prism' : 'flip', {r: best || 'C'}); packReveal.forEach(c => c.shown = true); renderColl(); return; }
+  if (t.closest('#pkOpen') || t.closest('#pkAgain')){ startPack(); return; }
+  if (t.closest('#bpOpen')){ tearPack(); return; }
+  const rv = t.closest('[data-rv]'); if (rv && packReveal && !packBusy){ revealOne(+rv.dataset.rv); return; }
+  if (t.closest('#pkAll')){ revealAll(); return; }
   if (t.closest('#pkDone')){ packReveal = null; collTab = 'cards'; renderColl(); return; }
 });
 

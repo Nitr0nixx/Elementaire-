@@ -83,7 +83,7 @@ function log(S, t){ S.log.push(t); if (S.log.length > 40) S.log.shift(); }
 function newGame(seed, decks = [0, 1], first = 0, mode){
   mode = mode || (decks.length === 4 ? 'duo' : 'duel');
   const duo = mode === 'duo', ffa = mode === 'ffa', N = decks.length;
-  const L = duo ? 6 : ffa ? 2 : 5, HP = duo ? 30 : 20;
+  const L = duo ? 6 : ffa ? 2 : 5, HP = duo || !ffa ? 30 : 20;   // Duel et Duo : 30 PV ; Mêlée : 20 PV + compensation de place
   const S = {seed: seed | 0, uid: 1, turn: 0, active: 0, winner: null, log: [], fx: [], board: [], players: [], duo, ffa, mode, lanes: L, teams: [], order: []};
   const LABELS = duo ? ['Tu', 'Adversaire 1', 'Ton allié', 'Adversaire 2'] : ffa ? ['Tu', 'Joueur 2', 'Joueur 3', 'Joueur 4'] : ['Tu', "L'adversaire"];
   const rndEl = () => ELS[Math.floor(rnd(S) * 4)];
@@ -264,7 +264,7 @@ function setEl(S, side, i, el){
 }
 function damage(S, side, i, n){
   const u = S.board[side][i].u; if (!u) return;
-  u.dmg += n; ev(S, {k:'dmg', side, i, n});
+  u.dmg += n; ev(S, {k:'dmg', side, i, n, id:u.card, st:u.stage, el:u.el, o:u.owner});
 }
 function gainXp(S, side, i, n){
   const c = S.board[side][i], u = c.u;
@@ -344,7 +344,7 @@ function attackAt(S, p, side, i){
   if (!u || u.owner !== p || u.sick || S.winner !== null || S.players[p].out) return;
   const os = oppSide(S, side); if (os < 0) return;
   const atk = effAtk(u, c), W = S.board[os].length;
-  ev(S, {k:'attack', side, i});
+  ev(S, {k:'attack', side, i, id:u.card, st:u.stage, el:u.el, p});
   const lanes = u.ab.includes('cleave') ? [i, i - 1, i + 1] : [i];
   for (const j of lanes){
     if (j < 0 || j >= W) continue;

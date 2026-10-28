@@ -399,6 +399,149 @@ button{font:inherit; color:inherit}
 .cd-rar{display:flex; align-items:center; gap:6px}
 #starterPanel .c-note{color:#efe2c4; font-style:normal; background:rgba(10,7,5,.7); border-radius:8px; padding:6px 10px; text-shadow:0 1px 2px #000}
 
+/* Fond de la partie : l'image du menu, assombrie */
+body:not(.on-menu)::before{content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(180deg, rgba(8,6,10,.82), rgba(8,6,10,.7) 35%, rgba(8,6,10,.78) 70%, rgba(8,6,10,.94)), url("img/menu-bg.jpg") center 30%/cover no-repeat, var(--hall)}
+
+/* Créatures actives et au repos */
+.unit.sick .u-img{filter:saturate(.25) brightness(.55); transform:scale(.94); transition:transform .3s, filter .3s}
+.unit.sick .art{filter:saturate(.25) brightness(.55)}
+.unit.rdy .u-img{filter:none}
+.ustate{position:absolute; top:-5px; left:-3px; z-index:4; width:18px; height:18px; border-radius:50%; display:grid; place-items:center; box-shadow:0 0 0 1.5px #000, 0 1px 3px rgba(0,0,0,.8)}
+.ustate svg{width:12px; height:12px}
+.unit.sick .ustate{background:#2a2622; color:#b9ad98}
+.unit.rdy .ustate{background:radial-gradient(circle at 35% 30%,#fff1c4,#c9962e 60%,#6a4a12); color:#2a1606}
+.unit.go .u-img{animation:readyGlow 1.8s ease-in-out infinite}
+@keyframes readyGlow{50%{box-shadow:0 0 0 1px #000, 0 0 14px 4px rgba(255,214,110,.85)}}
+.unit.go .ustate{animation:readyBadge 1.8s ease-in-out infinite}
+@keyframes readyBadge{50%{transform:scale(1.18); box-shadow:0 0 0 1.5px #000, 0 0 10px 3px rgba(255,214,110,.9)}}
+
+/* Échanges de combat (à droite de la ligne centrale) */
+.tradelog{position:absolute; right:2px; top:50%; transform:translateY(-50%); display:flex; gap:4px; z-index:3}
+.tr{display:flex; align-items:center; gap:1px; padding:1px 3px 1px 1px; border-radius:5px; cursor:pointer; background:rgba(12,9,6,.85); border:1.5px solid #e6b85a; opacity:.85; font:inherit; color:#f3e7cc; transition:opacity .15s, transform .15s}
+.tr:nth-child(2){opacity:.55}
+.tr:hover,.tr:focus-visible,.tr.on{opacity:1; transform:translateY(-2px) scale(1.1); z-index:2}
+.tr:focus-visible{outline:2px solid var(--gold); outline-offset:1px}
+.tr-foe{border-color:#d0574c}
+.tr-c{position:relative; width:15px; height:21px; border-radius:2px; overflow:hidden; background:#000; display:block}
+.tr-c img{width:100%; height:100%; object-fit:cover; display:block}
+.tr-c.dead img{filter:grayscale(1) brightness(.5)}
+.tr-c.dead::after{content:"✝"; position:absolute; inset:0; display:grid; place-items:center; font-size:11px; color:#ff9a8a; text-shadow:0 0 2px #000}
+.tr-x{font-style:normal; font-size:9px; color:#e6b85a}
+.tr-hero{font-size:9px; font-weight:800; color:#fff; background:#a8321e; border-radius:50%; width:17px; height:17px; display:grid; place-items:center}
+.tr-r{font-style:normal; font-size:9px; font-weight:800; color:#ffb4a8; margin-left:1px}
+.tr-r.kill{color:#ff8a7a}
+.tr.new{animation:plIn .45s cubic-bezier(.2,.9,.3,1.3)}
+.tr-list{margin:4px 0; padding-left:18px; font-size:13px}
+
+/* Duel en ligne : choix du deck */
+.net-h{margin:2px 0 0; text-align:center; font-family:var(--f-display); color:#ffe6a8; font-size:16px; text-shadow:0 1px 3px #000, 0 0 10px rgba(0,0,0,.9)}
+#netBody>.ghost{align-self:center}
+#netPanel .c-note{color:#efe2c4; text-shadow:0 1px 3px #000, 0 0 8px rgba(0,0,0,.9)}
+.net-decks{max-height:46vh; overflow:auto; padding:2px}
+#netBody{display:flex; flex-direction:column; gap:10px}
+.net-modes{flex-wrap:wrap; justify-content:center}
+.net-modes button{display:flex; flex-direction:column; align-items:center; line-height:1.15}
+.net-modes small{font-size:10px; opacity:.8; font-weight:500}
+.net-seats{list-style:none; margin:0; padding:0; display:grid; gap:5px}
+.net-seats li{display:flex; justify-content:space-between; gap:10px; padding:7px 12px; border-radius:9px; background:rgba(14,9,5,.82); box-shadow:0 0 0 1px #5d4a2c; font-size:13px}
+.net-seats li b{font-family:var(--f-display); color:#ffe6a8}
+.net-seats li.hum{box-shadow:0 0 0 1.5px #c9a14e}
+.net-seats li.ai span{color:#a99a80; font-style:italic}
+.net-seats li.over{opacity:.5; text-decoration:line-through}
+.net-warn{color:#ff9a8a; text-align:center; margin:0; font-weight:700; text-shadow:0 1px 2px #000}
+
+.hpmax{position:absolute; left:50%; top:30%; transform:translate(-50%,-50%) scale(.6); z-index:8; opacity:0; pointer-events:none; white-space:nowrap; text-align:center;
+  padding:5px 9px; border-radius:9px; font-size:12px; color:#fff3dc; background:rgba(14,9,5,.94); box-shadow:0 0 0 1.5px #c9a14e, 0 4px 12px rgba(0,0,0,.8); transition:opacity .12s, transform .12s}
+.hpmax b{font-family:var(--f-display); font-size:20px; color:#ffb4a8}
+.hpmax small{display:block; font-size:10px; color:#cbbd9f}
+.unit.peek .hpmax{opacity:1; transform:translate(-50%,-50%) scale(1)}
+.unit{-webkit-touch-callout:none; user-select:none}
+@media (hover:hover){ .unit:hover .hpmax{opacity:1; transform:translate(-50%,-50%) scale(1); transition-delay:.6s} }
+
+/* Duel en ligne */
+.net-code{display:flex; flex-direction:column; align-items:center; gap:6px; padding:16px 12px}
+.net-code small{color:var(--muted); font-size:12px; letter-spacing:.08em; text-transform:uppercase}
+.net-code b{font-family:var(--f-display); font-size:44px; letter-spacing:.22em; color:#fff3dc; text-shadow:0 2px 4px #000, 0 0 16px rgba(255,214,110,.7); padding-left:.22em}
+.net-in{display:flex; flex-direction:column; gap:6px; align-items:center; font-size:13px; color:var(--muted)}
+.net-in input{width:min(260px, 100%); font:800 30px/1 var(--f-display); letter-spacing:.25em; text-align:center; text-transform:uppercase; padding:10px 6px 10px calc(6px + .25em); border-radius:10px; color:#fff3dc; background:#120c07; border:2px solid #c9a14e; outline:none}
+.net-in input:focus-visible{box-shadow:0 0 0 3px rgba(217,180,90,.45)}
+.net-status{text-align:center; font-weight:700; color:#f3d58a; margin:4px 0; animation:hintPulse 1.8s ease-in-out infinite}
+.net-status.err{color:#ff9a8a; animation:none}
+.linkbtn{background:none; border:0; padding:0; color:var(--gold); text-decoration:underline; font:inherit; cursor:pointer}
+
+/* Historique des cartes jouées */
+.playlog{position:absolute; left:2px; top:50%; transform:translateY(-50%); display:flex; gap:3px; z-index:3}
+.pl{position:relative; width:19px; height:27px; padding:0; border-radius:3px; overflow:hidden; cursor:pointer; background:#000; border:1.5px solid #e6b85a; box-shadow:0 1px 3px rgba(0,0,0,.8); opacity:.82; transition:opacity .15s, transform .15s}
+.pl img{width:100%; height:100%; object-fit:cover; display:block}
+.pl:nth-child(n+2){opacity:.62} .pl:nth-child(n+3){opacity:.45}
+.pl:hover,.pl:focus-visible,.pl.on{opacity:1; transform:translateY(-2px) scale(1.15); z-index:2}
+.pl:focus-visible{outline:2px solid var(--gold); outline-offset:1px}
+.pl-foe{border-color:#d0574c} .pl-ally{border-color:#6fc4ff}
+.pl-sp{position:absolute; right:1px; bottom:1px; width:6px; height:6px; border-radius:50%; background:#fff1c4; box-shadow:0 0 3px #ffcc66}
+.pl.new{animation:plIn .45s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes plIn{0%{transform:translateX(-14px) scale(.4); opacity:0}100%{transform:none}}
+.log-who{font-size:12px; color:var(--muted); margin:0 0 4px}
+
+/* Ouverture de booster */
+.bp-stage{display:flex; flex-direction:column; align-items:center; gap:14px; padding:18px 0 8px}
+.bpack{position:relative; width:170px; height:250px; padding:0; border:0; background:none; cursor:pointer; filter:drop-shadow(0 14px 22px rgba(0,0,0,.7)); animation:bpFloat 3s ease-in-out infinite}
+@keyframes bpFloat{50%{transform:translateY(-6px) rotate(-1deg)}}
+.bp-body{position:absolute; inset:0; display:flex; flex-direction:column; border-radius:6px; overflow:hidden;
+  background:linear-gradient(135deg,#3a2408,#c9962e 22%,#fff1c4 40%,#a8782a 55%,#5a3a10 75%,#c9962e); box-shadow:inset 0 0 0 2px rgba(0,0,0,.5)}
+.bp-crimp{height:14px; flex:0 0 auto; background:linear-gradient(135deg,transparent 50%,#e6c27a 50%) 0 0/9px 9px, linear-gradient(225deg,transparent 50%,#e6c27a 50%) 0 0/9px 9px, repeating-linear-gradient(90deg,#5a3a10 0 3px,#b8862e 3px 6px); background-color:#3a2408}
+.bp-crimp.b{transform:scaleY(-1)}
+.bp-face{flex:1; margin:8px 12px 4px; border-radius:6px; overflow:hidden; box-shadow:0 0 0 2px #2a1a06, 0 0 0 4px #e6c27a, 0 4px 10px rgba(0,0,0,.6)}
+.bp-face img{width:100%; height:100%; object-fit:cover; display:block}
+.bp-name{font-family:var(--f-display); font-weight:800; font-size:13px; color:#2a1606; text-align:center; padding:2px 6px 6px; text-shadow:0 1px 0 rgba(255,240,200,.6)}
+.bp-shine{position:absolute; inset:0; border-radius:6px; pointer-events:none; background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.7) 48%,transparent 60%) 0 0/300% 100% no-repeat; mix-blend-mode:overlay; animation:glint 3s ease-in-out infinite}
+.bp-hint{animation:hintPulse 1.6s ease-in-out infinite}
+@keyframes hintPulse{50%{opacity:.5}}
+.bpack.tear{animation:bpShake .9s ease-in both}
+.bpack.t-L.tear,.bpack.t-fl.tear,.bpack.t-pz.tear{animation-duration:1.3s}
+@keyframes bpShake{0%{transform:none}20%{transform:rotate(-3deg) scale(1.02)}35%{transform:rotate(3deg) scale(1.04)}50%{transform:rotate(-4deg) scale(1.06)}65%{transform:rotate(5deg) scale(1.08)}80%{transform:rotate(-5deg) scale(1.12)}100%{transform:scale(1.35); opacity:0}}
+.bpack.tear .bp-body{animation:bpGlow 1.3s ease-in forwards}
+@keyframes bpGlow{100%{filter:brightness(2.4)}}
+.bpack.t-R.tear{filter:drop-shadow(0 0 18px rgba(111,168,255,.9))}
+.bpack.t-E.tear{filter:drop-shadow(0 0 22px rgba(192,140,255,.95))}
+.bpack.t-L.tear,.bpack.t-fl.tear{filter:drop-shadow(0 0 30px rgba(255,204,102,1)) drop-shadow(0 0 60px rgba(255,140,40,.7))}
+.bpack.t-pz.tear{filter:drop-shadow(0 0 26px rgba(255,138,224,.95)) drop-shadow(0 0 50px rgba(110,220,255,.7))}
+.pk-flash{position:fixed; inset:0; z-index:80; pointer-events:none; background:radial-gradient(circle, #fff 0, var(--fl) 40%, transparent 80%); opacity:0; animation:pkFlash .8s ease-out forwards}
+.pk-flash.t-C,.pk-flash.t-R{--fl:rgba(111,168,255,.6)} .pk-flash.t-E{--fl:rgba(192,140,255,.7)} .pk-flash.t-L,.pk-flash.t-fl{--fl:rgba(255,200,90,.85)} .pk-flash.t-pz{--fl:rgba(255,138,224,.75)}
+@keyframes pkFlash{15%{opacity:var(--o,.8)}100%{opacity:0}}
+#coll.shake{animation:shake .45s ease-out}
+@keyframes shake{20%{transform:translate(-5px,2px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-3px,2px)}80%{transform:translate(2px,-1px)}}
+.reveal.deal .rv{animation:rvDeal .55s cubic-bezier(.2,.8,.3,1.15) both; animation-delay:calc(var(--k) * 110ms)}
+@keyframes rvDeal{0%{transform:translateY(-140px) scale(.3) rotate(-25deg); opacity:0}100%{transform:none; opacity:1}}
+.rv{isolation:isolate}
+.rv-in{z-index:1}
+.rv-tag{z-index:3}
+.rv:not(.shown).t-R .rv-back img{box-shadow:0 0 0 2px #000, 0 0 10px 2px rgba(111,168,255,.55)}
+.rv:not(.shown).t-E .rv-back img{box-shadow:0 0 0 2px #000, 0 0 14px 4px rgba(192,140,255,.75); animation:backE 1.6s ease-in-out infinite}
+@keyframes backE{50%{box-shadow:0 0 0 2px #000, 0 0 20px 6px rgba(192,140,255,.95)}}
+.rv:not(.shown).t-L .rv-back img{box-shadow:0 0 0 2px #000, 0 0 18px 5px rgba(255,204,102,.9); animation:backL 1s ease-in-out infinite}
+@keyframes backL{50%{box-shadow:0 0 0 2px #000, 0 0 28px 10px rgba(255,214,120,1), 0 0 44px 16px rgba(255,140,40,.5)}}
+.rv:not(.shown):hover .rv-in{transform:translateY(-4px) rotateY(-8deg)}
+.reveal .rv.popfx{animation:rvPop .7s cubic-bezier(.2,.9,.3,1.3) .3s both}
+@keyframes rvPop{0%,100%{transform:none}40%{transform:scale(1.2)}}
+.rvfx{position:absolute; inset:0; pointer-events:none}
+.rvfx .ring{position:absolute; left:50%; top:50%; width:120px; height:120px; margin:-60px; border-radius:50%; z-index:2; border:3px solid var(--rc); box-shadow:0 0 14px var(--rc), inset 0 0 14px var(--rc); opacity:0; animation:ring .7s ease-out .15s forwards}
+@keyframes ring{0%{transform:scale(.3); opacity:1}100%{transform:scale(2); opacity:0}}
+.rvfx .rays{position:absolute; left:50%; top:50%; width:260px; height:260px; margin:-130px; z-index:0; border-radius:50%;
+  background:repeating-conic-gradient(from 0deg, var(--rc) 0 6deg, transparent 6deg 22deg); -webkit-mask:radial-gradient(circle, #000 18%, transparent 68%); mask:radial-gradient(circle, #000 18%, transparent 68%);
+  opacity:0; animation:raysIn .6s ease-out .1s forwards, raysSpin 9s linear infinite}
+@keyframes raysIn{to{opacity:.55}}
+@keyframes raysSpin{to{rotate:360deg}}
+.t-E .rvfx .rays{animation:raysIn .6s ease-out .1s forwards, raysSpin 12s linear infinite, raysOut .8s ease-in 1.8s forwards}
+@keyframes raysOut{to{opacity:0}}
+.rvfx .word{position:absolute; left:50%; top:38%; z-index:3; white-space:nowrap; font-style:normal; font-family:var(--f-display); font-weight:800; font-size:15px; letter-spacing:.04em; color:#fff; text-shadow:0 1px 2px #000, 0 0 10px var(--rc), 0 0 18px var(--rc); transform:translateX(-50%); opacity:0; animation:word 1.6s ease-out .25s forwards}
+@keyframes word{0%{opacity:0; transform:translate(-50%,10px) scale(.6)}20%{opacity:1; transform:translate(-50%,-4px) scale(1.15)}35%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0; transform:translate(-50%,-10px)}}
+.t-L .rvfx .word,.t-fl .rvfx .word,.t-pz .rvfx .word{font-size:17px; animation-duration:2.4s}
+.rv.t-R{--rc:rgba(111,168,255,.9)} .rv.t-E{--rc:rgba(192,140,255,.95)} .rv.t-L,.rv.t-fl{--rc:rgba(255,204,102,1)} .rv.t-pz{--rc:rgba(255,138,224,.95)}
+.t-pz .rvfx .rays{background:repeating-conic-gradient(from 0deg, #ff6fb5 0 5deg, transparent 5deg 15deg, #6fc4ff 15deg 20deg, transparent 20deg 30deg, #ffe27a 30deg 35deg, transparent 35deg 45deg)}
+.rvburst{position:absolute; inset:0; z-index:2; pointer-events:none}
+.rvburst .spark{width:6px; height:6px; margin:-3px}
+
 /* Cartes prismatiques */
 .holo{position:absolute; inset:0; pointer-events:none; z-index:0; mix-blend-mode:color-dodge; opacity:.42;
   background:linear-gradient(125deg, #ff4fa8 0%, #ffd84f 12%, #4fffc0 24%, #4fb8ff 36%, #b04fff 48%, #ff4fa8 60%, #ffd84f 72%, #4fffc0 84%, #4fb8ff 100%);
@@ -580,7 +723,7 @@ body.on-menu::before{content:""; position:fixed; inset:0; z-index:-1; pointer-ev
     <button class="btn-end m-gold" id="mAI" type="button"><span>Partie contre l'IA<small>Choisis ton deck, l'IA tire le sien au sort</small></span></button>
     <button class="btn-end m-gold duo-btn" id="mDuo" type="button"><span>Duo des Éléments<small class="pad">2 contre 2 : toi et une IA alliée contre deux IA</small><em class="chip new">Nouveau</em></span></button>
     <button class="btn-end m-gold ffa-btn" id="mFfa" type="button"><span>Mêlée<small class="pad">Chacun pour soi, à 3 ou 4 joueurs contre l'IA</small><em class="chip new">Nouveau</em></span></button>
-    <button class="btn-end m-gold alt soon" id="mMulti" type="button" aria-describedby="mMultiNote"><span>Multijoueur<small>En ligne, contre un autre joueur</small><em class="chip">Bientôt</em></span></button>
+    <button class="btn-end m-gold alt" id="mMulti" type="button"><span>En ligne<small class="pad">Duel, Duo ou Mêlée entre amis, avec un code</small><em class="chip new">Nouveau</em></span></button>
     <p class="soon-note" id="mMultiNote" hidden>Le mode multijoueur arrive dans une prochaine version. En attendant, entraîne-toi contre l'IA.</p>
     <div class="menu-row">
       <button class="ghost banner tuto-btn" id="mTuto" type="button"><span>Tutoriel</span></button>
@@ -602,6 +745,13 @@ body.on-menu::before{content:""; position:fixed; inset:0; z-index:-1; pointer-ev
     <div class="vs orn m-gold"><span class="d-medal medal mystery">?</span><span><b id="vsTitle">Ton adversaire</b><br><span id="vsText">L'IA tire son deck au sort au début de la partie. Il peut être identique au tien.</span></span></div>
     <button class="btn-end m-gold" id="mStart" type="button"><span>Lancer la partie</span></button>
     <div class="menu-row"><button class="ghost banner" id="mBack" type="button"><span>Retour</span></button></div>
+  </div>
+  <div class="menu-btns deck-panel" id="netPanel" hidden>
+    <h2 class="panel-title"><span class="banner"><span>Jouer en ligne</span></span></h2>
+    <div id="netBody"></div>
+    <p class="net-status" id="netStatus" role="status" aria-live="polite" hidden></p>
+    <p class="c-note center">Tous les joueurs doivent utiliser la même version du jeu : soit le site GitHub, soit cette page dans Claude.</p>
+    <div class="menu-row"><button class="ghost banner" id="netBack" type="button"><span>Retour</span></button></div>
   </div>
 </div>
 
@@ -628,14 +778,14 @@ body.on-menu::before{content:""; position:fixed; inset:0; z-index:-1; pointer-ev
     <div class="hero orn spikes el-E" id="hero1"></div>
     <div id="board">
       <div class="row" id="row1"></div>
-      <div class="divider"><span class="banner"><span id="turnLabel">Tour 1</span></span></div>
+      <div class="divider"><div class="playlog" hidden aria-label="Dernières cartes jouées"></div><span class="banner"><span id="turnLabel">Tour 1</span></span><div class="tradelog" hidden aria-label="Derniers échanges"></div></div>
       <div class="row" id="row0"></div>
     </div>
     <div class="hero orn spikes el-F" id="hero0"></div>
     <div id="ffa" hidden>
       <div class="fplates" id="ffaPlates"></div>
       <div class="borders" id="ffaFar"></div>
-      <div class="divider"><span class="banner"><span id="ffaTurn">Tour 1</span></span></div>
+      <div class="divider"><div class="playlog" hidden aria-label="Dernières cartes jouées"></div><span class="banner"><span id="ffaTurn">Tour 1</span></span><div class="tradelog" hidden aria-label="Derniers échanges"></div></div>
       <div class="borders mine" id="ffaMine"></div>
       <div class="fme orn el-F" id="ffaMe"></div>
       <button class="ghost banner vig" id="btnVigie" type="button" hidden><span>Vigie : échanger deux terrains</span></button>
@@ -651,7 +801,7 @@ body.on-menu::before{content:""; position:fixed; inset:0; z-index:-1; pointer-ev
 <div class="modal" id="rules" hidden>
   <div class="sheet orn spikes m-gold"><div class="sheet-in">
     <h2>Règles d'Élémentaires</h2>
-    <p>Réduis les 20 PV du héros adverse à zéro. Choisis ton deck parmi quatre : les <b>Enfants de l'Orage</b> (Feu et Air), les <b>Gardiens des Profondeurs</b> (Eau et Terre), les <b>Veilleurs des Cimes</b> (Air et Terre) ou les <b>Fils de la Vapeur</b> (Eau et Feu). L'IA tire le sien au sort.</p>
+    <p>Réduis les 30 PV du héros adverse à zéro. Choisis ton deck parmi quatre : les <b>Enfants de l'Orage</b> (Feu et Air), les <b>Gardiens des Profondeurs</b> (Eau et Terre), les <b>Veilleurs des Cimes</b> (Air et Terre) ou les <b>Fils de la Vapeur</b> (Eau et Feu). L'IA tire le sien au sort.</p>
     <p>Le joueur qui commence est tiré au sort. L'autre reçoit une carte de plus et un <b>Éclat de mana</b> (0 mana : +1 mana pour ce tour).</p>
     <h4>Ton tour</h4>
     <ul>
@@ -696,6 +846,7 @@ body.on-menu::before{content:""; position:fixed; inset:0; z-index:-1; pointer-ev
 /*SOUND*/
 /*ANIM*/
 /*META*/
+/*NET*/
 /*TUTO*/
 /*BOOT*/
 </script>

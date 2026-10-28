@@ -62,6 +62,7 @@ function startTutorial(){
   sel = null; inspect = null; inspectP = null; vigie = null; busy = false; running = false;
   mode = 'ai'; pick = 0;
   S = newGame(20261027, [0, 1], 0);
+  S.teams.forEach(T => { T.hp = T.max = 20; });   // tutoriel volontairement court
   S.tuto = true; S.diff = 'easy'; S.mode = 'ai';
   const P = S.players[0];
   S.board[0] = ['T', 'F', 'E', 'A', 'T'].map(el => ({el, u:null}));

@@ -29,7 +29,8 @@ const SND = (() => {
   function unlock(){
     if (!init()) return;
     if (ctx.state === 'suspended') ctx.resume();
-    if (pref.music && !musicTimer) startMusic();
+    loadSfx();
+    if (pref.music){ if (want) playTrack(want); else if (!musicTimer && !tk) startMusic(); }
   }
   ['pointerdown', 'keydown'].forEach(t => window.addEventListener(t, unlock, {passive: true}));
 
@@ -82,13 +83,63 @@ const SND = (() => {
     win(){ const t = now(); [[60, 64, 67], [65, 69, 72], [67, 71, 74], [72, 76, 79, 84]].forEach((ch, j) => ch.forEach(n => tone(N(n), t + j * .22, j === 3 ? 1.6 : .3, {type:'triangle', vol:.08, r: j === 3 ? 1.2 : .15}))); },
     lose(){ const t = now(); [[62, 65, 69], [60, 63, 67], [58, 62, 65], [57, 60, 64]].forEach((ch, j) => ch.forEach(n => tone(N(n - 12), t + j * .35, .9, {type:'sine', vol:.07, r:.6}))); },
     prism(){ const t = now(); [74, 78, 81, 86, 90, 93, 98].forEach((n, j) => { tone(N(n), t + j * .055, 1.3, {type:'sine', vol:.07, r:1}); tone(N(n + 12), t + .02 + j * .055, .9, {type:'triangle', vol:.025, r:.7, detune:8}); }); noise(t, 1.4, {vol:.1, f:7000, sweep:.4, q:.6}); tone(N(50), t, 1.6, {vol:.18}); },
+    tear(o = {}){ const t = now(), big = ['L', 'fl', 'pz'].includes(o.t), mid = o.t === 'E';
+      for (let k = 0; k < (big ? 7 : 4); k++) noise(t + k * .11, .09, {vol:.08 + k * .02, f:1500 + k * 300, q:1.5});
+      tone(N(38), t, big ? 1.2 : .8, {vol: big ? .3 : .15, glide: big ? 1.5 : 1.2, a:.4});
+      noise(t + (big ? .85 : .55), .35, {vol:.35, f:2500, sweep:.3, q:.6});
+      if (big || mid) [62, 69, 74, 78].forEach((n, j) => tone(N(n + (big ? 7 : 0)), t + .9 + j * .05, .8, {type:'triangle', vol:.07, r:.6})); },
+    legend(){ const t = now(); tone(N(26), t, 1.6, {vol:.45, glide:.7}); noise(t, .5, {vol:.25, f:160, type:'lowpass'});
+      [[62, 66, 69, 74], [64, 67, 71, 76]].forEach((ch, j) => ch.forEach(n => tone(N(n), t + .15 + j * .45, 1.4, {type:'sine', vol:.06, a:.08, r:1, detune: j ? 4 : -4}))); },
     coin(){ const t = now(); tone(N(88), t, .12, {type:'square', vol:.05}); tone(N(95), t + .07, .25, {type:'square', vol:.05}); },
     flip(o = {}){ const t = now(); noise(t, .1, {vol:.15, f:1800, q:1}); const r = o.r || 'C';
       if (r === 'R') tone(N(79), t + .05, .4, {vol:.08});
       if (r === 'E') [76, 83, 88].forEach((n, j) => tone(N(n), t + .05 + j * .06, .6, {type:'triangle', vol:.08}));
       if (r === 'L') { [72, 76, 79, 84, 88, 91].forEach((n, j) => tone(N(n), t + .05 + j * .06, 1, {type:'triangle', vol:.09})); tone(N(48), t, 1.4, {vol:.2}); } }
   };
-  function play(name, o){ if (!pref.sfx || !ctx || ctx.state !== 'running' || !FX[name]) return; try { FX[name](o); } catch (e) {} }
+  // --- bruitages enregistrés (chargés au premier geste ; sinon, sons synthétisés) ---
+  const SFX_FILES = {card:'sfx/card.mp3', crystal:'sfx/crystal.mp3', fire:'sfx/fire.mp3', water:'sfx/water.mp3', earth:'sfx/earth.mp3', wind:'sfx/wind.mp3', evolve:'sfx/evolve.mp3', legend:'sfx/legend.mp3', win:'sfx/win.mp3', lose:'sfx/lose.mp3', slash:'sfx/slash.mp3', hit:'sfx/hit.mp3', death:'sfx/death.mp3'};
+  const buf = {}; let sfxLoading = false;
+  function loadSfx(){
+    if (sfxLoading || !ctx || location.protocol === 'file:') return; sfxLoading = true;
+    Object.entries(SFX_FILES).forEach(([k, u]) => fetch(u).then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(b => ctx.decodeAudioData(b)).then(d => { buf[k] = d; }).catch(() => {}));
+  }
+  // Joue un échantillon ; maxDur coupe en fondu les sons trop longs. Renvoie sa durée, ou 0 s'il n'est pas chargé.
+  function sample(k, vol = 1, maxDur = 0, rate = 1){
+    const b = buf[k]; if (!b) return 0;
+    const s = ctx.createBufferSource(), g = ctx.createGain(), t = now();
+    s.buffer = b; s.playbackRate.value = rate; g.gain.value = vol; s.connect(g); g.connect(sfxBus); s.start(t);
+    let d = b.duration;
+    if (maxDur && d > maxDur){ g.gain.setValueAtTime(vol, t + maxDur - .6); g.gain.linearRampToValueAtTime(0, t + maxDur); s.stop(t + maxDur + .05); d = maxDur; }
+    return d;
+  }
+  // Baisse la musique le temps d'un jingle
+  function duck(sec){
+    [[trackBus, TRACK_VOL], [musicBus, .22]].forEach(([bus, v]) => {
+      if (!bus || !pref.music) return;
+      bus.gain.cancelScheduledValues(now()); bus.gain.setTargetAtTime(v * .25, now(), .12); bus.gain.setTargetAtTime(v, now() + sec, .9);
+    });
+  }
+  const SPELL_SFX = {F:'fire', E:'water', T:'earth', A:'wind'};
+  const SAMPLED = {
+    play: () => sample('card', .9),
+    flip: () => sample('card', .85),
+    mana: () => sample('crystal', 1),
+    coin: () => sample('crystal', .9),
+    spell: (o = {}) => sample(SPELL_SFX[o.el] || 'crystal', 1, 2.6),
+    dodge: () => sample('wind', .55),
+    // petites variations de hauteur pour que les coups répétés ne sonnent pas identiques
+    slash: (o = {}) => sample('slash', o.big ? 1 : .8, 0, (o.big ? .88 : 1) + (Math.random() * .12 - .06)),
+    hero: () => sample('hit', 1, 0, .95 + Math.random() * .1),
+    death: () => sample('death', .9, 0, .96 + Math.random() * .08),
+    evolve: (o = {}) => o.legend ? SAMPLED.legend() : sample('evolve', .9, 4),
+    legend: () => { const d = sample('legend', 1, 6); if (d) duck(d); return d; },
+    win: () => { const d = sample('win'); if (d) duck(d); return d; },
+    lose: () => { const d = sample('lose'); if (d) duck(d); return d; }
+  };
+  function play(name, o){
+    if (!pref.sfx || !ctx || ctx.state !== 'running') return;
+    try { if (SAMPLED[name] && SAMPLED[name](o)) return; if (FX[name]) FX[name](o); } catch (e) {}
+  }
 
   // --- musique : nappes modales et arpège lent, en ré éolien ---
   const PROG = [[50, 57, 62, 65], [46, 53, 58, 62], [41, 48, 53, 57], [48, 55, 60, 64]];
@@ -110,13 +161,67 @@ const SND = (() => {
     musicTimer = setInterval(() => { while (nextBar < now() + 1.2){ scheduleBar(nextBar); nextBar += BAR; } }, 300);
   }
   function stopMusic(){ if (musicTimer){ clearInterval(musicTimer); musicTimer = null; } }
+  // --- musiques enregistrées : une pour le menu, une par famille de deck ---
+  // Deux lecteurs par morceau, qui se relaient avec un fondu enchaîné pour une boucle sans coupure.
+  const TRACKS = {menu:'music/menu.mp3', orage:'music/orage.mp3', profondeurs:'music/profondeurs.mp3', cimes:'music/cimes.mp3', vapeur:'music/vapeur.mp3'};
+  const XF = 4, TRACK_VOL = .7, LOCAL = location.protocol === 'file:';
+  let want = null, tk = null, trackBus = null, tick = null;
+  function player(url){
+    const a = new Audio(url); a.preload = 'auto';
+    const p = {a, g:null, vol:0};
+    if (!LOCAL){ try { const src = ctx.createMediaElementSource(a); p.g = ctx.createGain(); p.g.gain.value = 0; src.connect(p.g); p.g.connect(trackBus); } catch (e) { p.g = null; } }
+    if (!p.g) a.volume = 0;
+    return p;
+  }
+  function fade(p, to, dur){
+    if (p.g){ p.g.gain.cancelScheduledValues(now()); p.g.gain.setValueAtTime(p.g.gain.value, now()); p.g.gain.linearRampToValueAtTime(to, now() + dur); return; }
+    const from = p.a.volume, t0 = performance.now();
+    clearInterval(p.fi); p.fi = setInterval(() => { const k = Math.min(1, (performance.now() - t0) / (dur * 1000)); try { p.a.volume = Math.max(0, Math.min(1, from + (to - from) * k)); } catch (e) {} if (k >= 1) clearInterval(p.fi); }, 50);
+  }
+  function stopTrack(dur = 1.2){
+    if (!tk) return;
+    const old = tk; tk = null;
+    old.ps.forEach(p => fade(p, 0, dur));
+    setTimeout(() => old.ps.forEach(p => { p.a.pause(); p.a.removeAttribute('src'); p.a.load(); }), dur * 1000 + 100);
+  }
+  function playTrack(name){
+    if (!ctx || !pref.music || !TRACKS[name]) return;
+    if (tk && tk.name === name) return;
+    stopTrack();
+    if (!trackBus){ trackBus = ctx.createGain(); trackBus.gain.value = TRACK_VOL; trackBus.connect(master); }
+    const t = {name, ps:[player(TRACKS[name]), player(TRACKS[name])], cur:0, failed:false};
+    tk = t;
+    const first = t.ps[0];
+    first.a.play().then(() => { if (tk === t){ stopMusic(); fade(first, 1, 2.5); } })
+      .catch(() => { t.failed = true; if (tk === t && !musicTimer) startMusic(); });
+    first.a.onerror = () => { t.failed = true; if (tk === t && !musicTimer) startMusic(); };
+    if (!tick) tick = setInterval(loopCheck, 250);
+  }
+  function loopCheck(){
+    if (!tk || tk.failed) return;
+    const p = tk.ps[tk.cur], d = p.a.duration;
+    if (!d || p.a.paused || p.a.currentTime < d - XF) return;
+    const q = tk.ps[1 - tk.cur];
+    q.a.currentTime = 0; q.a.play().catch(() => {}); fade(q, 1, XF * .8); fade(p, 0, XF);
+    tk.cur = 1 - tk.cur;
+  }
+  function setTrack(name){
+    want = name;
+    if (!ctx || ctx.state !== 'running' || !pref.music) return;
+    playTrack(name);
+  }
   function setMusic(on){
     pref.music = on; savePref();
     if (!init()) return;
     musicBus.gain.setTargetAtTime(on ? .22 : 0, now(), .3);
-    if (on){ if (ctx.state === 'suspended') ctx.resume(); startMusic(); } else setTimeout(() => { if (!pref.music) stopMusic(); }, 1500);
+    if (on){ if (ctx.state === 'suspended') ctx.resume(); if (want) playTrack(want); else startMusic(); }
+    else { stopTrack(.8); setTimeout(() => { if (!pref.music) stopMusic(); }, 1500); }
   }
   function setSfx(on){ pref.sfx = on; savePref(); if (init()) sfxBus.gain.setTargetAtTime(on ? .55 : 0, now(), .05); }
-  document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else ctx.resume(); });
-  return {play, setMusic, setSfx, pref};
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return;
+    if (document.hidden){ ctx.suspend(); if (tk) tk.ps.forEach(p => { p.wasOn = !p.a.paused; p.a.pause(); }); }
+    else { ctx.resume(); if (tk) tk.ps.forEach(p => { if (p.wasOn) p.a.play().catch(() => {}); }); }
+  });
+  return {play, setMusic, setSfx, setTrack, pref};
 })();
