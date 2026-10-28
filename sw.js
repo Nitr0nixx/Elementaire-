@@ -1,6 +1,6 @@
 // Service worker : rend le jeu installable et jouable hors connexion.
 // Change VERSION à chaque mise à jour pour forcer le rafraîchissement.
-const VERSION = 'elementaires-v8';
+const VERSION = 'elementaires-v9';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'img/menu-bg.jpg', 'img/dos.jpg'];
 
 self.addEventListener('install', e => {
