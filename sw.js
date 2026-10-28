@@ -1,6 +1,6 @@
 // Service worker : rend le jeu installable et jouable hors connexion.
 // Change VERSION à chaque mise à jour pour forcer le rafraîchissement.
-const VERSION = 'elementaires-v1';
+const VERSION = 'elementaires-v4';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'img/menu-bg.jpg', 'img/dos.jpg'];
 
 self.addEventListener('install', e => {
@@ -13,6 +13,8 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // Musiques : lues en flux par le navigateur (requêtes partielles), jamais mises en cache ici
+  if (req.headers.has('range') || url.pathname.includes('/music/')) return;
   // Page : le réseau d'abord (pour avoir la dernière version), le cache si hors connexion
   if (req.mode === 'navigate'){
     e.respondWith(fetch(req).then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put('index.html', copy)); return r; })
