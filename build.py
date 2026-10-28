@@ -1,5 +1,5 @@
 s=open('src/shell.html').read()
-for k,f in [('ENGINE','engine.js'),('ART','art.js'),('UI','ui.js'),('SOUND','sound.js'),('ANIM','anim.js'),('META','meta.js'),('NET','net.js'),('TUTO','tuto.js'),('BOOT','boot.js')]:
+for k,f in [('ENGINE','engine.js'),('ART','art.js'),('UI','ui.js'),('SOUND','sound.js'),('ANIM','anim.js'),('META','meta.js'),('NET','net.js'),('SAVEIO','saveio.js'),('TUTO','tuto.js'),('BOOT','boot.js')]:
     s=s.replace('/*%s*/'%k, open('src/'+f).read())
 
 # Version autonome (GitHub Pages, ouverture locale) : page HTML complète

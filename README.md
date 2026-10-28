@@ -24,7 +24,7 @@ Les créatures gagnent de l'expérience et **évoluent selon l'élément de la c
 - **Ambiance** : musiques orchestrales, bruitages et animations.
 - **Version physique** : le kit d'impression est dans `impression/`.
 
-La progression est sauvegardée dans le navigateur (localStorage), séparément sur chaque appareil.
+La progression est sauvegardée dans le navigateur, séparément sur chaque appareil. Le bouton **Sauvegarde** du menu l'exporte (code ou fichier) et l'importe sur un autre appareil ; une partie hors ligne interrompue se reprend avec « Continuer la partie ».
 
 ## Structure
 
@@ -40,6 +40,7 @@ src/
   anim.js               animations
   meta.js               collection, boosters, decks, progression
   tuto.js               tutoriel et niveaux de difficulté
+  saveio.js             export / import de la sauvegarde, reprise de partie
   boot.js               démarrage
 build.py                assemble src/ en index.html
 manifest.webmanifest    description de l'application installable
